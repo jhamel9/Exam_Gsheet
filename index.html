@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEC Campus Navigation - User Survey</title>
+    <title>CEC Campus Navigation - Interactive Survey</title>
     <!-- Use Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js for 3D graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -13,94 +16,60 @@
         /* Custom styles for the survey interface */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0D2239; /* CEC blue */
-            background-image: radial-gradient(circle at center, rgba(13, 34, 57, 0.8) 0%, transparent 25%),
-                              radial-gradient(circle at center, rgba(13, 34, 57, 0.8) 0%, transparent 25%),
-                              radial-gradient(circle at center, rgba(13, 34, 57, 0.8) 0%, transparent 25%);
-            background-repeat: no-repeat;
-            background-size: 80px 80px;
+            background: linear-gradient(135deg, #0D2239 0%, #1A2E47 100%);
             color: #E5E5E5;
             transition: all 0.3s ease-in-out;
+            overflow-x: hidden;
         }
 
         .cec-title {
             font-family: 'Bebas Neue', sans-serif;
             letter-spacing: 2px;
-            color: #D4AF37; /* CEC gold */
+            color: #D4AF37;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .card {
-            background-color: #1A2E47;
+            background: rgba(26, 46, 71, 0.9);
             border: 2px solid #D4AF37;
             transition: all 0.3s ease-in-out;
-            animation: pulse-border 2s infinite ease-in-out;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
 
         .card:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
-            animation-play-state: paused;
+            transform: translateY(-5px);
+            box-shadow: 0 12px 36px rgba(212, 175, 55, 0.3);
         }
 
-        .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.8);
-        }
-        .modal-content {
-            animation: fadeIn 0.3s ease-out;
-            background-color: #1A2E47;
-            border: 2px solid #D4AF37;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+        /* 3D Canvas */
+        #campus-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
         }
 
-        @keyframes pulse-border {
-            0% { border-color: #D4AF37; box-shadow: 0 0 5px rgba(212, 175, 55, 0.3); }
-            50% { border-color: #FFD700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
-            100% { border-color: #D4AF37; box-shadow: 0 0 5px rgba(212, 175, 55, 0.3); }
-        }
-
-        /* Hide scrollbars for a cleaner look */
-        body::-webkit-scrollbar {
-            display: none;
-        }
-        body {
-            -ms-overflow-style: none; /* IE and Edge */
-            scrollbar-width: none; /* Firefox */
-        }
-
-        /* Custom scrollbar for question container if needed */
-        #question-container {
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        #question-container::-webkit-scrollbar {
-            width: 8px;
-        }
-        #question-container::-webkit-scrollbar-track {
-            background: #1A2E47;
-        }
-        #question-container::-webkit-scrollbar-thumb {
-            background-color: #D4AF37;
-            border-radius: 4px;
-        }
-        
         /* Form styling */
         .form-input {
-            background-color: #0D2239;
+            background: rgba(13, 34, 57, 0.7);
             border: 1px solid #2C4369;
             color: white;
             padding: 0.75rem;
             border-radius: 0.5rem;
             width: 100%;
             margin-bottom: 1rem;
+            transition: all 0.3s;
         }
+
         .form-input:focus {
             outline: none;
             border-color: #D4AF37;
-            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.3);
         }
+
         .form-label {
             display: block;
             margin-bottom: 0.5rem;
@@ -108,54 +77,101 @@
             color: #E5E5E5;
         }
 
-        /* Loading spinner */
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid #D4AF37;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #D4AF37 0%, #BF9520 100%);
+            color: #0D2239;
+            font-weight: bold;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
         }
-        
-        /* CEC logo styling */
-        .cec-logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #0D2239 0%, #1A2E47 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #D4AF37;
-            margin: 0 auto 20px;
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-weight: bold;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .cec-logo-inner {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 24px;
-            color: #D4AF37;
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #D4AF37 0%, #FFD700 100%);
+            border-radius: 4px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Question animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-container {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .card {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+            
+            .cec-title {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Floating elements */
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body class="min-h-screen flex items-center justify-center p-4">
+    <!-- 3D Campus Canvas -->
+    <canvas id="campus-canvas"></canvas>
 
     <!-- Start Screen -->
-    <div id="start-screen" class="card p-8 rounded-xl shadow-2xl w-full max-w-2xl text-center transition-opacity duration-500">
-        <div class="cec-logo">
-            <div class="cec-logo-inner">CEC</div>
+    <div id="start-screen" class="card p-8 rounded-2xl w-full max-w-2xl text-center floating">
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#BF9520] flex items-center justify-center shadow-lg">
+            <span class="text-2xl font-bold text-[#0D2239]">CEC</span>
         </div>
-        <h1 class="text-6xl font-extrabold text-white mb-4 cec-title">Campus Navigation System</h1>
+        <h1 class="text-5xl md:text-6xl font-extrabold text-white mb-4 cec-title">Campus Navigation System</h1>
         <p class="text-lg text-gray-300 mb-8">Help us improve campus navigation by completing this survey</p>
         
         <!-- Student Information Form -->
-        <div id="student-info-form" class="text-left p-6 rounded-lg mb-6" style="background-color: #0D2239;">
-            <h2 class="text-xl font-bold text-gray-200 mb-4">Student Information:</h2>
+        <div id="student-info-form" class="text-left p-6 rounded-xl mb-6 bg-gradient-to-br from-[#0D2239] to-[#1A2E47]">
+            <h2 class="text-xl font-bold text-white mb-4">Student Information:</h2>
             
             <div class="mb-4">
                 <label class="form-label" for="student-name">Full Name</label>
@@ -183,8 +199,8 @@
             </div>
         </div>
         
-        <div class="text-left p-6 rounded-lg mb-8" style="background-color: #0D2239;">
-            <h2 class="text-xl font-bold text-gray-200 mb-2">Survey Guidelines:</h2>
+        <div class="text-left p-6 rounded-xl mb-8 bg-gradient-to-br from-[#0D2239] to-[#1A2E47]">
+            <h2 class="text-xl font-bold text-white mb-2">Survey Guidelines:</h2>
             <ul class="list-disc list-inside text-gray-300 space-y-2">
                 <li>This survey will take approximately 5-7 minutes to complete.</li>
                 <li>Your responses will help improve campus navigation for everyone.</li>
@@ -192,34 +208,41 @@
                 <li>Please answer all questions honestly and to the best of your ability.</li>
             </ul>
         </div>
-        <button id="start-button" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
+        <button id="start-button" class="btn-primary w-full">
             Begin Survey
         </button>
     </div>
 
     <!-- Survey Screen -->
-    <div id="survey-screen" class="hidden w-full h-full p-4 transition-opacity duration-500 flex flex-col items-center">
+    <div id="survey-screen" class="hidden w-full max-w-2xl flex flex-col items-center">
         <!-- Header with Progress and Timer -->
-        <div class="card w-full max-w-2xl rounded-xl shadow-lg p-6 mb-6 flex justify-between items-center">
-            <div class="text-xl font-semibold text-gray-200">Progress: <span id="progress" class="text-blue-400 font-bold">1/15</span></div>
-            <div class="text-xl font-semibold text-gray-200">Time: <span id="timer" class="text-green-400 font-bold">05:00</span></div>
+        <div class="card rounded-2xl p-6 mb-6 w-full flex justify-between items-center">
+            <div class="text-lg font-semibold text-white">Progress: <span id="progress" class="text-[#D4AF37] font-bold">1/15</span></div>
+            <div class="text-lg font-semibold text-white">Time: <span id="timer" class="text-[#D4AF37] font-bold">05:00</span></div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full mb-6">
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill" style="width: 6.66%"></div>
+            </div>
         </div>
 
         <!-- Question Container -->
-        <div id="question-container" class="card w-full max-w-2xl rounded-xl shadow-lg p-8">
+        <div id="question-container" class="card rounded-2xl p-8 w-full question-container">
             <!-- Question content will be rendered here by JavaScript -->
         </div>
     </div>
 
     <!-- Completion Screen -->
-    <div id="completion-screen" class="hidden card p-8 rounded-xl shadow-2xl w-full max-w-2xl text-center transition-opacity duration-500">
-        <div class="cec-logo">
-            <div class="cec-logo-inner">CEC</div>
+    <div id="completion-screen" class="hidden card p-8 rounded-2xl w-full max-w-2xl text-center floating">
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#BF9520] flex items-center justify-center shadow-lg">
+            <span class="text-2xl font-bold text-[#0D2239]">CEC</span>
         </div>
         <h2 class="text-4xl font-extrabold text-white mb-4 cec-title">Survey Complete!</h2>
         <p class="text-lg text-gray-300 mb-6">Thank you for participating in our survey.</p>
-        <div class="mb-6 p-6 rounded-lg bg-blue-900/30">
-            <p class="text-gray-200 mb-4">Your feedback will help us create a better campus navigation system for Cebu Eastern College.</p>
+        <div class="mb-6 p-6 rounded-xl bg-gradient-to-br from-[#0D2239] to-[#1A2E47]">
+            <p class="text-white mb-4">Your feedback will help us create a better campus navigation system for Cebu Eastern College.</p>
             <p class="text-gray-300 text-sm">The navigation system will include:</p>
             <ul class="list-disc list-inside text-gray-300 text-sm mt-2 space-y-1">
                 <li>Faculty information directory</li>
@@ -228,7 +251,7 @@
                 <li>Event creation and location setting</li>
             </ul>
         </div>
-        <button id="restart-button" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
+        <button id="restart-button" class="btn-primary w-full">
             Return to Start
         </button>
     </div>
@@ -327,6 +350,10 @@
                 course: ""
             };
 
+            // Three.js variables
+            let scene, camera, renderer, controls;
+            let campusBuildings = [];
+
             // --- DOM Elements ---
             const body = document.body;
             const startScreen = document.getElementById('start-screen');
@@ -336,14 +363,155 @@
             const restartButton = document.getElementById('restart-button');
             const timerDisplay = document.getElementById('timer');
             const progressDisplay = document.getElementById('progress');
+            const progressFill = document.getElementById('progress-fill');
             const questionContainer = document.getElementById('question-container');
+            const canvas = document.getElementById('campus-canvas');
             
             // Student info form elements
             const studentNameInput = document.getElementById('student-name');
             const studentYearInput = document.getElementById('student-year');
             const studentCourseInput = document.getElementById('student-course');
 
-            // --- Functions ---
+            // --- Three.js Campus Visualization ---
+            function initThreeJS() {
+                // Create scene
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x0D2239);
+                
+                // Create camera
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.set(0, 5, 10);
+                
+                // Create renderer
+                renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                
+                // Add lights
+                const ambientLight = new THREE.AmbientLight(0x404040);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xD4AF37, 0.8);
+                directionalLight.position.set(5, 10, 7);
+                scene.add(directionalLight);
+                
+                const hemisphereLight = new THREE.HemisphereLight(0x1A2E47, 0x0D2239, 0.6);
+                scene.add(hemisphereLight);
+                
+                // Create campus ground
+                const groundGeometry = new THREE.PlaneGeometry(30, 30);
+                const groundMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x1A2E47,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.position.y = -0.5;
+                scene.add(ground);
+                
+                // Add grid helper
+                const gridHelper = new THREE.GridHelper(30, 30, 0x2C4369, 0x2C4369);
+                gridHelper.position.y = -0.49;
+                scene.add(gridHelper);
+                
+                // Create campus buildings
+                createCampusBuildings();
+                
+                // Add orbit controls
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                controls.minDistance = 5;
+                controls.maxDistance = 20;
+                
+                // Handle window resize
+                window.addEventListener('resize', onWindowResize);
+                
+                // Start animation
+                animate();
+            }
+            
+            function createCampusBuildings() {
+                // Main building
+                const mainBuilding = createBuilding(4, 3, 8, 0xD4AF37);
+                mainBuilding.position.set(0, 1.5, 0);
+                scene.add(mainBuilding);
+                campusBuildings.push(mainBuilding);
+                
+                // Library
+                const library = createBuilding(3, 2, 6, 0x2C4369);
+                library.position.set(-6, 1, 5);
+                scene.add(library);
+                campusBuildings.push(library);
+                
+                // Science building
+                const scienceBuilding = createBuilding(3, 2.5, 5, 0x1A2E47);
+                scienceBuilding.position.set(6, 1.25, 5);
+                scene.add(scienceBuilding);
+                campusBuildings.push(scienceBuilding);
+                
+                // Dormitory
+                const dormitory = createBuilding(5, 2, 4, 0x0D2239);
+                dormitory.position.set(-5, 1, -5);
+                scene.add(dormitory);
+                campusBuildings.push(dormitory);
+                
+                // Gymnasium
+                const gym = createBuilding(6, 2, 4, 0x2C4369);
+                gym.position.set(5, 1, -5);
+                scene.add(gym);
+                campusBuildings.push(gym);
+            }
+            
+            function createBuilding(width, height, depth, color) {
+                const geometry = new THREE.BoxGeometry(width, height, depth);
+                const material = new THREE.MeshStandardMaterial({ 
+                    color,
+                    roughness: 0.7,
+                    metalness: 0.3
+                });
+                const building = new THREE.Mesh(geometry, material);
+                
+                // Add windows
+                const windowMaterial = new THREE.MeshBasicMaterial({ color: 0xADD8E6 });
+                for (let i = 0; i < 4; i++) {
+                    const windowGeometry = new THREE.PlaneGeometry(0.5, 0.5);
+                    const window = new THREE.Mesh(windowGeometry, windowMaterial);
+                    
+                    if (i === 0) window.position.set(width/2 + 0.01, 0, 0);
+                    else if (i === 1) window.position.set(-width/2 - 0.01, 0, 0);
+                    else if (i === 2) window.position.set(0, 0, depth/2 + 0.01);
+                    else window.position.set(0, 0, -depth/2 - 0.01);
+                    
+                    window.rotation.y = i * Math.PI / 2;
+                    building.add(window);
+                }
+                
+                return building;
+            }
+            
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Animate buildings slightly
+                const time = Date.now() * 0.001;
+                campusBuildings.forEach((building, index) => {
+                    building.position.y = Math.sin(time + index * 0.5) * 0.05 + building.position.y;
+                    building.rotation.y = Math.sin(time * 0.5 + index) * 0.01;
+                });
+                
+                controls.update();
+                renderer.render(scene, camera);
+            }
+
+            // --- Survey Functions ---
 
             /**
              * Validates student information form
@@ -384,10 +552,12 @@
                 questionContainer.innerHTML = ''; // Clear previous content
 
                 // Update progress display
+                const progressPercent = ((currentQuestionIndex + 1) / surveyData.questions.length) * 100;
                 progressDisplay.textContent = `${currentQuestionIndex + 1}/${surveyData.questions.length}`;
+                progressFill.style.width = `${progressPercent}%`;
 
                 const questionElement = document.createElement('h2');
-                questionElement.className = "text-2xl font-bold text-gray-200 mb-6";
+                questionElement.className = "text-2xl font-bold text-white mb-6";
                 questionElement.textContent = `Q${currentQuestionIndex + 1}. ${questionData.question}`;
                 questionContainer.appendChild(questionElement);
 
@@ -424,7 +594,7 @@
                 if (currentQuestionIndex > 0) {
                     const prevButton = document.createElement('button');
                     prevButton.textContent = "Previous";
-                    prevButton.className = "bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300";
+                    prevButton.className = "btn-secondary";
                     prevButton.onclick = previousQuestion;
                     navButtons.appendChild(prevButton);
                 } else {
@@ -434,7 +604,7 @@
                 
                 const nextButton = document.createElement('button');
                 nextButton.textContent = currentQuestionIndex === surveyData.questions.length - 1 ? "Complete Survey" : "Next";
-                nextButton.className = "bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105";
+                nextButton.className = "btn-primary";
                 nextButton.onclick = nextQuestion;
                 navButtons.appendChild(nextButton);
 
@@ -514,7 +684,6 @@
                 clearInterval(timerInterval);
                 
                 // Hide survey screen and show completion screen
-                surveyScreen.classList.remove('flex');
                 surveyScreen.classList.add('hidden');
                 completionScreen.classList.remove('hidden');
                 
@@ -535,7 +704,6 @@
                 // Hide start screen and show survey screen
                 startScreen.classList.add('hidden');
                 surveyScreen.classList.remove('hidden');
-                surveyScreen.classList.add('flex');
                 
                 // Start the timer
                 updateTimer();
@@ -584,6 +752,9 @@
                     console.warn(`Blocked restricted key: ${e.key}`);
                 }
             });
+
+            // Initialize Three.js scene
+            initThreeJS();
 
         })();
     </script>
