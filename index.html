@@ -16,7 +16,7 @@
         /* Custom styles for the survey interface */
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0D2239 0%, #1A2E47 100%);
+            background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
             color: #E5E5E5;
             transition: all 0.3s ease-in-out;
             overflow-x: hidden;
@@ -30,8 +30,8 @@
         }
 
         .card {
-            background: rgba(26, 46, 71, 0.9);
-            border: 2px solid #D4AF37;
+            background: rgba(26, 26, 26, 0.9);
+            border: 2px solid #555555;
             transition: all 0.3s ease-in-out;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
@@ -54,8 +54,8 @@
 
         /* Form styling */
         .form-input {
-            background: rgba(13, 34, 57, 0.7);
-            border: 1px solid #2C4369;
+            background: rgba(13, 13, 13, 0.7);
+            border: 1px solid #555555;
             color: white;
             padding: 0.75rem;
             border-radius: 0.5rem;
@@ -170,7 +170,7 @@
         <p class="text-lg text-gray-300 mb-8">Help us improve campus navigation by completing this survey</p>
         
         <!-- Student Information Form -->
-        <div id="student-info-form" class="text-left p-6 rounded-xl mb-6 bg-gradient-to-br from-[#0D2239] to-[#1A2E47]">
+        <div id="student-info-form" class="text-left p-6 rounded-xl mb-6 bg-gradient-to-br from-[#1f2937] to-[#374151]">
             <h2 class="text-xl font-bold text-white mb-4">Student Information:</h2>
             
             <div class="mb-4">
@@ -192,11 +192,11 @@
             
             <div class="mb-4">
                 <label class="form-label" for="student-course">Course/Program (if applicable)</label>
-                <input type="text" id="student-course" class="form-input" placeholder="e.g., BS Information Technology">
+                <input type="text" id="student-course" class="form-input" placeholder="bsit">
             </div>
         </div>
         
-        <div class="text-left p-6 rounded-xl mb-8 bg-gradient-to-br from-[#0D2239] to-[#1A2E47]">
+        <div class="text-left p-6 rounded-xl mb-8 bg-gradient-to-br from-[#1f2937] to-[#374151]">
             <h2 class="text-xl font-bold text-white mb-2">Survey Guidelines:</h2>
             <ul class="list-disc list-inside text-gray-300 space-y-2">
                 <li>This survey will take approximately 5-7 minutes to complete.</li>
@@ -238,7 +238,7 @@
         </div>
         <h2 class="text-4xl font-extrabold text-white mb-4 cec-title">Survey Complete!</h2>
         <p class="text-lg text-gray-300 mb-6">Thank you for participating in our survey.</p>
-        <div class="mb-6 p-6 rounded-xl bg-gradient-to-br from-[#0D2239] to-[#1A2E47]">
+        <div class="mb-6 p-6 rounded-xl bg-gradient-to-br from-[#1f2937] to-[#374151]">
             <p class="text-white mb-4">Your feedback will help us create a better campus navigation system for Cebu Eastern College.</p>
             <p class="text-gray-300 text-sm">The navigation system will include:</p>
             <ul class="list-disc list-inside text-gray-300 text-sm mt-2 space-y-1">
@@ -373,7 +373,7 @@
             function initThreeJS() {
                 // Create scene
                 scene = new THREE.Scene();
-                scene.background = new THREE.Color(0x0D2239);
+                scene.background = new THREE.Color(0xffffff);
                 
                 // Create camera
                 camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
