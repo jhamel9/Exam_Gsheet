@@ -8,7 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Three.js for 3D graphics -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -16,8 +15,8 @@
         /* Custom styles for the survey interface */
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
-            color: #E5E5E5;
+            background-color: #0D2239;
+            color: #fff;
             transition: all 0.3s ease-in-out;
             overflow-x: hidden;
         }
@@ -25,13 +24,13 @@
         .cec-title {
             font-family: 'Bebas Neue', sans-serif;
             letter-spacing: 2px;
-            color: #D4AF37;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         .card {
-            background: rgba(26, 26, 26, 0.9);
-            border: 2px solid #555555;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             transition: all 0.3s ease-in-out;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
@@ -39,7 +38,7 @@
 
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 12px 36px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
         }
 
         /* 3D Canvas */
@@ -54,27 +53,32 @@
 
         /* Form styling */
         .form-input {
-            background: rgba(13, 13, 13, 0.7);
-            border: 1px solid #555555;
-            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
             padding: 0.75rem;
             border-radius: 0.5rem;
             width: 100%;
             margin-bottom: 1rem;
             transition: all 0.3s;
         }
+        
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
 
         .form-input:focus {
             outline: none;
             border-color: #D4AF37;
             box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.3);
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .form-label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
-            color: #E5E5E5;
+            color: #fff;
         }
 
         /* Buttons */
@@ -95,7 +99,7 @@
 
         .btn-secondary {
             background: rgba(255, 255, 255, 0.1);
-            color: white;
+            color: #fff;
             font-weight: bold;
             padding: 0.75rem 2rem;
             border-radius: 50px;
@@ -167,10 +171,10 @@
             <span class="text-2xl font-bold text-[#0D2239]">CEC</span>
         </div>
         <h1 class="text-5xl md:text-6xl font-extrabold text-white mb-4 cec-title">Campus Navigation System</h1>
-        <p class="text-lg text-gray-300 mb-8">Help us improve campus navigation by completing this survey</p>
+        <p class="text-lg text-gray-200 mb-8">Help us improve campus navigation by completing this survey</p>
         
         <!-- Student Information Form -->
-        <div id="student-info-form" class="text-left p-6 rounded-xl mb-6 bg-gradient-to-br from-[#1f2937] to-[#374151]">
+        <div id="student-info-form" class="text-left p-6 rounded-xl mb-6 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.2)] backdrop-blur-lg">
             <h2 class="text-xl font-bold text-white mb-4">Student Information:</h2>
             
             <div class="mb-4">
@@ -196,9 +200,9 @@
             </div>
         </div>
         
-        <div class="text-left p-6 rounded-xl mb-8 bg-gradient-to-br from-[#1f2937] to-[#374151]">
+        <div class="text-left p-6 rounded-xl mb-8 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.2)] backdrop-blur-lg">
             <h2 class="text-xl font-bold text-white mb-2">Survey Guidelines:</h2>
-            <ul class="list-disc list-inside text-gray-300 space-y-2">
+            <ul class="list-disc list-inside text-gray-200 space-y-2">
                 <li>This survey will take approximately 5-7 minutes to complete.</li>
                 <li>Your responses will help improve campus navigation for everyone.</li>
                 <li>All responses are anonymous and will be used for academic purposes only.</li>
@@ -237,11 +241,11 @@
             <span class="text-2xl font-bold text-[#0D2239]">CEC</span>
         </div>
         <h2 class="text-4xl font-extrabold text-white mb-4 cec-title">Survey Complete!</h2>
-        <p class="text-lg text-gray-300 mb-6">Thank you for participating in our survey.</p>
-        <div class="mb-6 p-6 rounded-xl bg-gradient-to-br from-[#1f2937] to-[#374151]">
+        <p class="text-lg text-gray-200 mb-6">Thank you for participating in our survey.</p>
+        <div class="mb-6 p-6 rounded-xl bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.2)] backdrop-blur-lg">
             <p class="text-white mb-4">Your feedback will help us create a better campus navigation system for Cebu Eastern College.</p>
-            <p class="text-gray-300 text-sm">The navigation system will include:</p>
-            <ul class="list-disc list-inside text-gray-300 text-sm mt-2 space-y-1">
+            <p class="text-gray-200 text-sm">The navigation system will include:</p>
+            <ul class="list-disc list-inside text-gray-200 text-sm mt-2 space-y-1">
                 <li>Faculty information directory</li>
                 <li>Interactive room navigation</li>
                 <li>Emergency exit guidance</li>
@@ -348,8 +352,22 @@
             };
 
             // Three.js variables
-            let scene, camera, renderer, controls;
-            let campusBuildings = [];
+            let scene, camera, renderer, points;
+            let mouseX = 0, mouseY = 0;
+            let targetRotationX = 0, targetRotationY = 0;
+            let currentRotationX = 0, currentRotationY = 0;
+            const colors = [
+                new THREE.Color(0xFFD700), // Gold
+                new THREE.Color(0x00A0FF), // Blue
+                new THREE.Color(0xFF4500), // OrangeRed
+                new THREE.Color(0x9370DB), // Purple
+                new THREE.Color(0x32CD32)  // LimeGreen
+            ];
+            let currentColorIndex = 0;
+            let targetColor = colors[0];
+            let currentColor = colors[0];
+            let colorChangeSpeed = 0.02;
+            let particleSystem;
 
             // --- DOM Elements ---
             const body = document.body;
@@ -369,123 +387,118 @@
             const studentYearInput = document.getElementById('student-year');
             const studentCourseInput = document.getElementById('student-course');
 
-            // --- Three.js Campus Visualization ---
+            // --- Three.js Points Visualization ---
             function initThreeJS() {
                 // Create scene
                 scene = new THREE.Scene();
-                scene.background = new THREE.Color(0xffffff);
+                scene.background = new THREE.Color(0x0D2239);
                 
                 // Create camera
                 camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.set(0, 5, 10);
+                camera.position.z = 200;
                 
                 // Create renderer
-                renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+                renderer = new THREE.WebGLRenderer({ 
+                    canvas, 
+                    antialias: true, 
+                    alpha: true 
+                });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setPixelRatio(window.devicePixelRatio);
                 
                 // Add lights
-                const ambientLight = new THREE.AmbientLight(0x404040);
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
                 scene.add(ambientLight);
                 
-                const directionalLight = new THREE.DirectionalLight(0xD4AF37, 0.8);
-                directionalLight.position.set(5, 10, 7);
-                scene.add(directionalLight);
-                
-                const hemisphereLight = new THREE.HemisphereLight(0x1A2E47, 0x0D2239, 0.6);
-                scene.add(hemisphereLight);
-                
-                // Create campus ground
-                const groundGeometry = new THREE.PlaneGeometry(30, 30);
-                const groundMaterial = new THREE.MeshStandardMaterial({ 
-                    color: 0x1A2E47,
-                    roughness: 0.8,
-                    metalness: 0.2
-                });
-                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-                ground.rotation.x = -Math.PI / 2;
-                ground.position.y = -0.5;
-                scene.add(ground);
-                
-                // Add grid helper
-                const gridHelper = new THREE.GridHelper(30, 30, 0x2C4369, 0x2C4369);
-                gridHelper.position.y = -0.49;
-                scene.add(gridHelper);
-                
-                // Create campus buildings
-                createCampusBuildings();
-                
-                // Add orbit controls
-                controls = new THREE.OrbitControls(camera, renderer.domElement);
-                controls.enableDamping = true;
-                controls.dampingFactor = 0.05;
-                controls.minDistance = 5;
-                controls.maxDistance = 20;
+                // Create the points system
+                createPointsSystem();
                 
                 // Handle window resize
                 window.addEventListener('resize', onWindowResize);
+
+                // Handle mouse and touch events
+                document.addEventListener('mousemove', onMouseMove, false);
+                document.addEventListener('touchmove', onTouchMove, false);
                 
                 // Start animation
                 animate();
             }
-            
-            function createCampusBuildings() {
-                // Main building
-                const mainBuilding = createBuilding(4, 3, 8, 0xD4AF37);
-                mainBuilding.position.set(0, 1.5, 0);
-                scene.add(mainBuilding);
-                campusBuildings.push(mainBuilding);
-                
-                // Library
-                const library = createBuilding(3, 2, 6, 0x2C4369);
-                library.position.set(-6, 1, 5);
-                scene.add(library);
-                campusBuildings.push(library);
-                
-                // Science building
-                const scienceBuilding = createBuilding(3, 2.5, 5, 0x1A2E47);
-                scienceBuilding.position.set(6, 1.25, 5);
-                scene.add(scienceBuilding);
-                campusBuildings.push(scienceBuilding);
-                
-                // Dormitory
-                const dormitory = createBuilding(5, 2, 4, 0x0D2239);
-                dormitory.position.set(-5, 1, -5);
-                scene.add(dormitory);
-                campusBuildings.push(dormitory);
-                
-                // Gymnasium
-                const gym = createBuilding(6, 2, 4, 0x2C4369);
-                gym.position.set(5, 1, -5);
-                scene.add(gym);
-                campusBuildings.push(gym);
-            }
-            
-            function createBuilding(width, height, depth, color) {
-                const geometry = new THREE.BoxGeometry(width, height, depth);
-                const material = new THREE.MeshStandardMaterial({ 
-                    color,
-                    roughness: 0.7,
-                    metalness: 0.3
-                });
-                const building = new THREE.Mesh(geometry, material);
-                
-                // Add windows
-                const windowMaterial = new THREE.MeshBasicMaterial({ color: 0xADD8E6 });
-                for (let i = 0; i < 4; i++) {
-                    const windowGeometry = new THREE.PlaneGeometry(0.5, 0.5);
-                    const window = new THREE.Mesh(windowGeometry, windowMaterial);
+
+            function createPointsSystem() {
+                const particleCount = 3000;
+                const positions = new Float32Array(particleCount * 3);
+                const sizes = new Float32Array(particleCount);
+                const originalPositions = new Float32Array(particleCount * 3);
+
+                for (let i = 0; i < particleCount; i++) {
+                    let radius;
+                    // Make 40% of particles closer
+                    if (Math.random() > 0.6) {
+                        radius = 30 + Math.random() * 40; // Closer particles
+                    } else {
+                        radius = 100 + Math.random() * 100; // Farther particles
+                    }
                     
-                    if (i === 0) window.position.set(width/2 + 0.01, 0, 0);
-                    else if (i === 1) window.position.set(-width/2 - 0.01, 0, 0);
-                    else if (i === 2) window.position.set(0, 0, depth/2 + 0.01);
-                    else window.position.set(0, 0, -depth/2 - 0.01);
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.random() * Math.PI;
                     
-                    window.rotation.y = i * Math.PI / 2;
-                    building.add(window);
+                    const x = radius * Math.sin(phi) * Math.cos(theta);
+                    const y = radius * Math.sin(phi) * Math.sin(theta);
+                    const z = radius * Math.cos(phi);
+                    
+                    positions[i * 3] = x;
+                    positions[i * 3 + 1] = y;
+                    positions[i * 3 + 2] = z;
+                    
+                    originalPositions[i * 3] = x;
+                    originalPositions[i * 3 + 1] = y;
+                    originalPositions[i * 3 + 2] = z;
+                    
+                    // Random size between 2 and 6
+                    sizes[i] = 2 + Math.random() * 4;
                 }
                 
-                return building;
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+                geometry.setAttribute('originalPosition', new THREE.BufferAttribute(originalPositions, 3));
+                
+                // Create a glowing circular texture
+                const textureCanvas = document.createElement('canvas');
+                textureCanvas.width = 128;
+                textureCanvas.height = 128;
+                const context = textureCanvas.getContext('2d');
+                
+                const gradient = context.createRadialGradient(
+                    textureCanvas.width / 2,
+                    textureCanvas.height / 2,
+                    0,
+                    textureCanvas.width / 2,
+                    textureCanvas.height / 2,
+                    textureCanvas.width / 2
+                );
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(0.2, 'rgba(255, 215, 0, 0.8)');
+                gradient.addColorStop(0.5, 'rgba(255, 140, 0, 0.4)');
+                gradient.addColorStop(1, 'rgba(255, 69, 0, 0)');
+                
+                context.fillStyle = gradient;
+                context.fillRect(0, 0, textureCanvas.width, textureCanvas.height);
+                
+                const particleTexture = new THREE.CanvasTexture(textureCanvas);
+                
+                const material = new THREE.PointsMaterial({
+                    size: 8,
+                    map: particleTexture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    sizeAttenuation: true,
+                    depthWrite: false,
+                    color: currentColor
+                });
+                
+                particleSystem = new THREE.Points(geometry, material);
+                scene.add(particleSystem);
             }
             
             function onWindowResize() {
@@ -493,18 +506,109 @@
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             }
+
+            // Function to handle mouse movement
+            function onMouseMove(event) {
+                mouseX = (event.clientX - window.innerWidth / 2);
+                mouseY = (event.clientY - window.innerHeight / 2);
+                
+                // Calculate target rotation based on mouse position
+                targetRotationX = -mouseY * 0.0001;
+                targetRotationY = -mouseX * 0.0001;
+                
+                // Change color based on mouse speed
+                const speed = Math.sqrt(mouseX * mouseX + mouseY * mouseY);
+                if (speed > 50) {
+                    // Increase color change speed with mouse speed
+                    colorChangeSpeed = 0.02 + (speed / 1000) * 0.1;
+                    
+                    // Occasionally change target color when moving fast
+                    if (Math.random() < 0.01) {
+                        currentColorIndex = (currentColorIndex + 1) % colors.length;
+                        targetColor = colors[currentColorIndex];
+                    }
+                }
+            }
+
+            // Function to handle touch movement
+            function onTouchMove(event) {
+                if (event.touches.length === 1) {
+                    event.preventDefault();
+                    mouseX = (event.touches[0].pageX - window.innerWidth / 2);
+                    mouseY = (event.touches[0].pageY - window.innerHeight / 2);
+                    
+                    targetRotationX = -mouseY * 0.0001;
+                    targetRotationY = -mouseX * 0.0001;
+                    
+                    // Change color based on touch speed
+                    const speed = Math.sqrt(mouseX * mouseX + mouseY * mouseY);
+                    if (speed > 50) {
+                        colorChangeSpeed = 0.02 + (speed / 1000) * 0.1;
+                        
+                        if (Math.random() < 0.01) {
+                            currentColorIndex = (currentColorIndex + 1) % colors.length;
+                            targetColor = colors[currentColorIndex];
+                        }
+                    }
+                }
+            }
             
             function animate() {
                 requestAnimationFrame(animate);
                 
-                // Animate buildings slightly
-                const time = Date.now() * 0.001;
-                campusBuildings.forEach((building, index) => {
-                    building.position.y = Math.sin(time + index * 0.5) * 0.05 + building.position.y;
-                    building.rotation.y = Math.sin(time * 0.5 + index) * 0.01;
-                });
+                // Smoothly interpolate rotation
+                currentRotationX += (targetRotationX - currentRotationX) * 0.05;
+                currentRotationY += (targetRotationY - currentRotationY) * 0.05;
                 
-                controls.update();
+                particleSystem.rotation.x = currentRotationX;
+                particleSystem.rotation.y = currentRotationY;
+                
+                // Smoothly interpolate color
+                currentColor.r += (targetColor.r - currentColor.r) * colorChangeSpeed;
+                currentColor.g += (targetColor.g - currentColor.g) * colorChangeSpeed;
+                currentColor.b += (targetColor.b - currentColor.b) * colorChangeSpeed;
+                
+                particleSystem.material.color.copy(currentColor);
+                
+                // Make particles move and respond to mouse
+                const time = Date.now() * 0.001;
+                const positions = particleSystem.geometry.attributes.position.array;
+                const originalPositions = particleSystem.geometry.attributes.originalPosition.array;
+                const sizes = particleSystem.geometry.attributes.size.array;
+                
+                for (let i = 0; i < positions.length; i += 3) {
+                    // Calculate distance from center
+                    const dx = originalPositions[i];
+                    const dy = originalPositions[i + 1];
+                    const dz = originalPositions[i + 2];
+                    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                    
+                    // Make particles move in subtle waves
+                    const waveFactor = 0.5 + 0.5 * Math.sin(time * 0.5 + dist * 0.01);
+                    
+                    // Apply mouse influence to closer particles more strongly
+                    const mouseInfluence = dist < 70 ? 
+                        1.5 * (1 - dist/70) * (mouseX * 0.0001 + mouseY * 0.0001) : 
+                        0;
+                    
+                    positions[i] = originalPositions[i] + 
+                        waveFactor * Math.sin(time * 0.3 + i * 0.01) * 0.5 + 
+                        mouseInfluence * Math.sin(time * 2 + i * 0.01);
+                    
+                    positions[i + 1] = originalPositions[i + 1] + 
+                        waveFactor * Math.cos(time * 0.4 + i * 0.01) * 0.5 + 
+                        mouseInfluence * Math.cos(time * 2 + i * 0.01);
+                        
+                    positions[i + 2] = originalPositions[i + 2] + 
+                        waveFactor * Math.sin(time * 0.5 + i * 0.01) * 0.5;
+                }
+                
+                particleSystem.geometry.attributes.position.needsUpdate = true;
+                
+                // Make particles pulse with color changes
+                const pulse = 0.9 + 0.1 * Math.sin(time * 2);
+                particleSystem.material.opacity = 0.6 + 0.4 * pulse;
+                
                 renderer.render(scene, camera);
             }
 
@@ -515,13 +619,15 @@
              */
             const validateStudentInfo = () => {
                 if (!studentNameInput.value.trim()) {
-                    alert("Please enter your name");
+                    // Replaced alert with a simple console log for a better user experience
+                    console.log("Please enter your name");
                     studentNameInput.focus();
                     return false;
                 }
                 
                 if (!studentYearInput.value) {
-                    alert("Please select your year level");
+                    // Replaced alert with a simple console log for a better user experience
+                    console.log("Please select your year level");
                     studentYearInput.focus();
                     return false;
                 }
@@ -564,12 +670,12 @@
                 if (questionData.type === "multiple-choice") {
                     questionData.options.forEach((option, index) => {
                         const optionLabel = document.createElement('label');
-                        optionLabel.className = "flex items-center space-x-3 text-lg text-gray-300 p-3 rounded-lg hover:bg-blue-900/30 transition-colors cursor-pointer";
+                        optionLabel.className = "flex items-center space-x-3 text-lg text-gray-200 p-3 rounded-lg hover:bg-[rgba(255,255,255,0.1)] transition-colors cursor-pointer";
                         const optionInput = document.createElement('input');
                         optionInput.type = "radio";
                         optionInput.name = `question-${currentQuestionIndex}`;
                         optionInput.value = option;
-                        optionInput.className = "form-radio h-5 w-5 text-blue-500 focus:ring-blue-500";
+                        optionInput.className = "form-radio h-5 w-5 text-[#D4AF37] focus:ring-[#D4AF37]";
                         optionLabel.appendChild(optionInput);
                         optionLabel.appendChild(document.createTextNode(option));
                         answerSection.appendChild(optionLabel);
@@ -578,7 +684,7 @@
                     const shortAnswerInput = document.createElement('textarea');
                     shortAnswerInput.rows = 3;
                     shortAnswerInput.placeholder = "Enter your response here...";
-                    shortAnswerInput.className = "w-full p-4 border border-gray-700 bg-blue-900/30 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
+                    shortAnswerInput.className = "w-full p-4 border border-[rgba(255,255,255,0.3)] bg-[rgba(255,255,255,0.2)] text-white rounded-lg focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent transition-all";
                     shortAnswerInput.id = "short-answer-input";
                     answerSection.appendChild(shortAnswerInput);
                 }
@@ -620,14 +726,16 @@
                     if (selectedOption) {
                         userAnswer = selectedOption.value;
                     } else {
-                        alert("Please select an answer before continuing");
+                        // Replaced alert with a simple console log for a better user experience
+                        console.log("Please select an answer before continuing");
                         return;
                     }
                 } else if (questionData.type === "short-answer") {
                     const shortAnswerInput = document.getElementById('short-answer-input');
                     userAnswer = shortAnswerInput.value.trim();
                     if (!userAnswer) {
-                        alert("Please provide an answer before continuing");
+                        // Replaced alert with a simple console log for a better user experience
+                        console.log("Please provide an answer before continuing");
                         return;
                     }
                 }
