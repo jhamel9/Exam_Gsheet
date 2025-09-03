@@ -579,24 +579,25 @@
                     const dz = originalPositions[i + 2];
                     const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
                     
-                    // Make particles move in subtle waves
-                    const waveFactor = 0.5 + 0.5 * Math.sin(time * 0.5 + dist * 0.01);
+                    // Make particles move in subtle waves. Increased the time factor for more movement.
+                    // Increased the wave amplitude from 0.8 to 1.5 for more pronounced self-movement
+                    const waveFactor = 0.5 + 0.5 * Math.sin(time * 0.8 + dist * 0.01);
                     
-                    // Apply mouse influence to closer particles more strongly
+                    // Apply mouse influence, but with a smaller multiplier to make the wave movement more dominant
                     const mouseInfluence = dist < 70 ? 
-                        1.5 * (1 - dist/70) * (mouseX * 0.0001 + mouseY * 0.0001) : 
+                        1.0 * (1 - dist/70) * (mouseX * 0.0001 + mouseY * 0.0001) : 
                         0;
                     
                     positions[i] = originalPositions[i] + 
-                        waveFactor * Math.sin(time * 0.3 + i * 0.01) * 0.5 + 
-                        mouseInfluence * Math.sin(time * 2 + i * 0.01);
+                        waveFactor * Math.sin(time * 0.5 + i * 0.01) * 1.5 + 
+                        mouseInfluence * Math.sin(time * 3.0 + i * 0.01);
                     
                     positions[i + 1] = originalPositions[i + 1] + 
-                        waveFactor * Math.cos(time * 0.4 + i * 0.01) * 0.5 + 
-                        mouseInfluence * Math.cos(time * 2 + i * 0.01);
+                        waveFactor * Math.cos(time * 0.6 + i * 0.01) * 1.5 + 
+                        mouseInfluence * Math.cos(time * 3.0 + i * 0.01);
                         
                     positions[i + 2] = originalPositions[i + 2] + 
-                        waveFactor * Math.sin(time * 0.5 + i * 0.01) * 0.5;
+                        waveFactor * Math.sin(time * 0.8 + i * 0.01) * 1.5;
                 }
                 
                 particleSystem.geometry.attributes.position.needsUpdate = true;
