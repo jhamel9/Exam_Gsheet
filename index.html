@@ -106,6 +106,21 @@
             font-weight: 600;
             color: #E5E5E5;
         }
+
+        /* Loading spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #A92222;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -114,6 +129,12 @@
     <div id="start-screen" class="card p-8 rounded-xl shadow-2xl w-full max-w-2xl text-center transition-opacity duration-500">
         <h1 class="text-6xl font-extrabold text-white mb-4 venom-title">Symbiote Exam Protocol</h1>
         <p class="text-lg text-gray-400 mb-8">Initiate the bond. Your mental fortitude will be tested. Read the terms before proceeding.</p>
+        
+        <!-- Loading indicator (initially hidden) -->
+        <div id="loading-indicator" class="hidden">
+            <div class="spinner"></div>
+            <p class="text-gray-400 mt-2">Loading exam data...</p>
+        </div>
         
         <!-- Student Information Form -->
         <div id="student-info-form" class="text-left p-6 rounded-lg mb-6" style="background-color: #111;">
@@ -199,19 +220,11 @@
 
     <!-- Script Block -->
     <script>
-        // Replace the examData variable with this:
-let examData = {};
-
-// Load exam data from external JSON file
-fetch('survey_data.json')
-  .then(response => response.json())
-  .then(data => {
-      examData = data;
-  })
-  .catch(error => {
-      console.error('Error loading exam data:', error);
-      alert('Failed to load exam data. Please try again later.');
-  });
+        // Use an IIFE (Immediately Invoked Function Expression) to avoid polluting the global scope
+        (function() {
+            // --- Exam Data and State ---
+            let examData = {};
+            let examDataLoaded = false;
 
             // Global state variables
             let shuffledQuestions = [];
@@ -241,6 +254,9 @@ fetch('survey_data.json')
             const confirmationModal = document.getElementById('confirmation-modal');
             const confirmYesButton = document.getElementById('confirm-yes-button');
             const confirmNoButton = document.getElementById('confirm-no-button');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const studentInfoForm = document.getElementById('student-info-form');
+            const rulesSection = document.querySelector('.text-left.p-6.rounded-lg.mb-8');
             
             // Student info form elements
             const studentNameInput = document.getElementById('student-name');
@@ -248,6 +264,49 @@ fetch('survey_data.json')
             const studentEdpInput = document.getElementById('student-edp');
 
             // --- Functions ---
+
+            /**
+             * Load exam data from external JSON file
+             */
+            const loadExamData = () => {
+                // Show loading indicator
+                loadingIndicator.classList.remove('hidden');
+                studentInfoForm.classList.add('hidden');
+                rulesSection.classList.add('hidden');
+                startButton.disabled = true;
+                
+                fetch('survey_data.json')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        examData = data;
+                        examDataLoaded = true;
+                        
+                        // Hide loading indicator and show form
+                        loadingIndicator.classList.add('hidden');
+                        studentInfoForm.classList.remove('hidden');
+                        rulesSection.classList.remove('hidden');
+                        startButton.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error loading exam data:', error);
+                        loadingIndicator.innerHTML = `
+                            <div class="text-red-500 mb-4">
+                                <p class="font-bold">Error loading exam data:</p>
+                                <p>${error.message}</p>
+                            </div>
+                            <button id="retry-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded">
+                                Retry
+                            </button>
+                        `;
+                        
+                        document.getElementById('retry-button').addEventListener('click', loadExamData);
+                    });
+            };
 
             /**
              * Handles the cursor-following background effect.
@@ -541,6 +600,12 @@ fetch('survey_data.json')
 
             // --- Event Listeners for Exam Logic ---
             startButton.addEventListener('click', () => {
+                // Check if exam data is loaded
+                if (!examDataLoaded) {
+                    alert("Exam data is still loading. Please wait.");
+                    return;
+                }
+                
                 // Validate student info
                 if (!validateStudentInfo()) {
                     return;
@@ -640,6 +705,9 @@ fetch('survey_data.json')
 
             // Start cursor-following background effect on load
             window.addEventListener('mousemove', handleMouseMove);
+            
+            // Load exam data when page loads
+            loadExamData();
             
         })();
     </script>
