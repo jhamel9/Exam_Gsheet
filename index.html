@@ -8,6 +8,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Three.js for 3D graphics -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Firebase SDKs for authentication and Firestore -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase configuration and authentication token
+        window.__firebase_config = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+        window.__initial_auth_token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : undefined;
+        window.__app_id = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // Expose Firebase functions to the global scope for use in the main script
+        window.firebase = {
+            initializeApp,
+            getAuth,
+            signInAnonymously,
+            signInWithCustomToken,
+            getFirestore,
+            collection,
+            addDoc,
+            setLogLevel
+        };
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -159,6 +182,25 @@
             50% { transform: translateY(-10px); }
             100% { transform: translateY(0px); }
         }
+
+        /* Message Box styles */
+        #message-box {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease-in-out;
+        }
+        #message-box.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -166,17 +208,16 @@
     <canvas id="campus-canvas"></canvas>
 
     <!-- Message Box -->
-    <div id="message-box" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 p-6 rounded-lg shadow-xl text-center z-50 transition-all duration-300 transform scale-95 opacity-0 pointer-events-none" style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);">
+    <div id="message-box" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 p-6 rounded-lg shadow-xl text-center z-50">
         <p id="message-text" class="text-white text-lg font-semibold"></p>
-        <button onclick="document.getElementById('message-box').classList.remove('scale-100', 'opacity-100', 'pointer-events-auto'); document.getElementById('message-box').classList.add('scale-95', 'opacity-0', 'pointer-events-none');" class="mt-4 px-4 py-2 rounded-full text-white bg-[#4169E1] hover:bg-[#2d46a6] transition-colors">OK</button>
+        <button id="message-ok-button" class="mt-4 px-4 py-2 rounded-full text-white bg-[#4169E1] hover:bg-[#2d46a6] transition-colors">OK</button>
     </div>
 
     <!-- Start Screen -->
     <div id="start-screen" class="card p-8 rounded-2xl w-full max-w-2xl text-center floating">
         <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#4169E1] to-[#2d46a6] flex items-center justify-center shadow-lg">
-            <!-- Replaced the CEC text with an image of the logo -->
-            <!-- Use a placeholder image here. For a live app, replace the src with the actual logo URL. -->
-            <img images-removebg-preview. png" alt="Cebu Eastern College Logo" class="w-full h-full rounded-full p-2">
+            <!-- Corrected image path to a placeholder -->
+            <img src="https://placehold.co/96x96/FFFFFF/0D2239?text=CEC+Logo" alt="Cebu Eastern College Logo" class="w-full h-full rounded-full p-2">
         </div>
         <h1 class="text-5xl md:text-6xl font-extrabold text-white mb-4 cec-title">Campus Navigation System</h1>
         <p class="text-lg text-gray-200 mb-8">Help us improve campus navigation by completing this survey</p>
@@ -266,9 +307,12 @@
     </div>
 
     <!-- Script Block -->
-    <script>
+    <script type="module">
         // Use an IIFE (Immediately Invoked Function Expression) to avoid polluting the global scope
         (function() {
+            // Firestore initialization variables
+            let db, auth, userId, appId;
+
             // --- Survey Data ---
             const surveyData = {
                 questions: [
@@ -353,34 +397,25 @@
             let surveyAnswers = [];
             let timerInterval;
             let timeLeft = 300; // 5 minutes in seconds
-            let studentInfo = {
-                name: "",
-                year: "",
-                course: ""
-            };
+            let studentInfo = {};
 
             // Three.js variables
             let scene, camera, renderer, points;
             let mouseX = 0, mouseY = 0;
             let targetRotationX = 0, targetRotationY = 0;
             let currentRotationX = 0, currentRotationY = 0;
-            // The rainbow colors
             const colors = [
-                new THREE.Color(0x0000FF), // Blue (Starting color)
-                new THREE.Color(0xFF0000), // Red
-                new THREE.Color(0xFF7F00), // Orange
-                new THREE.Color(0xFFFF00), // Yellow
-                new THREE.Color(0x00FF00), // Green
-                new THREE.Color(0x4B0082), // Indigo
-                new THREE.Color(0x9400D3)  // Violet
+                new THREE.Color(0x0000FF), new THREE.Color(0xFF0000), new THREE.Color(0xFF7F00),
+                new THREE.Color(0xFFFF00), new THREE.Color(0x00FF00), new THREE.Color(0x4B0082),
+                new THREE.Color(0x9400D3)
             ];
             let currentColorIndex = 0;
             let targetColor = colors[0];
             let currentColor = colors[0];
-            let colorChangeSpeed = 0.005; // Reduced speed for a softer transition
+            let colorChangeSpeed = 0.005;
             let particleSystem;
-            let clock = new THREE.Clock(); // For time-based color changes
-
+            let clock = new THREE.Clock();
+            
             // --- DOM Elements ---
             const body = document.body;
             const startScreen = document.getElementById('start-screen');
@@ -402,7 +437,66 @@
             // Message box elements
             const messageBox = document.getElementById('message-box');
             const messageText = document.getElementById('message-text');
+            const messageOkButton = document.getElementById('message-ok-button');
 
+            /**
+             * Shows a custom message box instead of using an alert.
+             * @param {string} message The message to display.
+             */
+            const showMessageBox = (message) => {
+                messageText.textContent = message;
+                messageBox.classList.add('show');
+            };
+
+            const hideMessageBox = () => {
+                messageBox.classList.remove('show');
+            };
+
+            messageOkButton.addEventListener('click', hideMessageBox);
+
+            // --- Firestore Functions ---
+            const initializeFirestore = async () => {
+                try {
+                    firebase.setLogLevel('debug');
+                    const firebaseConfig = JSON.parse(window.__firebase_config);
+                    const app = firebase.initializeApp(firebaseConfig);
+                    auth = firebase.getAuth(app);
+                    db = firebase.getFirestore(app);
+
+                    if (window.__initial_auth_token) {
+                        await firebase.signInWithCustomToken(auth, window.__initial_auth_token);
+                    } else {
+                        await firebase.signInAnonymously(auth);
+                    }
+                    userId = auth.currentUser?.uid || `anonymous-${crypto.randomUUID()}`;
+                    appId = window.__app_id;
+                    console.log("Firebase initialized successfully. User ID:", userId);
+                } catch (error) {
+                    console.error("Error initializing Firebase:", error);
+                    showMessageBox("Failed to connect to the database. Please check the console for details.");
+                }
+            };
+            
+            /**
+             * Submits survey data to Firestore.
+             * @param {object} studentInfo Student information object.
+             * @param {Array} surveyAnswers Array of survey answer objects.
+             */
+            async function submitSurvey(studentInfo, surveyAnswers) {
+                try {
+                    const surveyRef = firebase.collection(db, `/artifacts/${appId}/users/${userId}/survey_responses`);
+                    await firebase.addDoc(surveyRef, {
+                        ...studentInfo,
+                        answers: surveyAnswers,
+                        submissionDate: new Date().toISOString()
+                    });
+                    console.log("Survey submitted successfully to Firestore.");
+                    showMessageBox("Survey submitted successfully!");
+                } catch (err) {
+                    console.error("Error saving survey to Firestore:", err);
+                    showMessageBox("Error saving survey. Please try again.");
+                }
+            }
 
             // --- Three.js Points Visualization ---
             function initThreeJS() {
@@ -415,10 +509,10 @@
                 camera.position.z = 200;
                 
                 // Create renderer
-                renderer = new THREE.WebGLRenderer({ 
-                    canvas, 
-                    antialias: true, 
-                    alpha: true 
+                renderer = new THREE.WebGLRenderer({
+                    canvas,
+                    antialias: true,
+                    alpha: true
                 });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setPixelRatio(window.devicePixelRatio);
@@ -449,11 +543,10 @@
 
                 for (let i = 0; i < particleCount; i++) {
                     let radius;
-                    // Make 40% of particles closer
                     if (Math.random() > 0.6) {
-                        radius = 30 + Math.random() * 40; // Closer particles
+                        radius = 30 + Math.random() * 40;
                     } else {
-                        radius = 100 + Math.random() * 100; // Farther particles
+                        radius = 100 + Math.random() * 100;
                     }
                     
                     const theta = Math.random() * Math.PI * 2;
@@ -471,7 +564,6 @@
                     originalPositions[i * 3 + 1] = y;
                     originalPositions[i * 3 + 2] = z;
                     
-                    // Random size between 2 and 6
                     sizes[i] = 2 + Math.random() * 4;
                 }
                 
@@ -480,7 +572,6 @@
                 geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
                 geometry.setAttribute('originalPosition', new THREE.BufferAttribute(originalPositions, 3));
                 
-                // Create a glowing circular texture with a solid inner circle and a more visible glow
                 const textureCanvas = document.createElement('canvas');
                 textureCanvas.width = 128;
                 textureCanvas.height = 128;
@@ -495,11 +586,10 @@
                     textureCanvas.width / 2
                 );
                 
-                // Define the texture stops for the solid inner circle and the more visible glow
-                gradient.addColorStop(0.0, 'rgba(255, 255, 255, 1)'); // Solid white core
-                gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.8)'); // Start the glowing fade
+                gradient.addColorStop(0.0, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.8)');
                 gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.2)');
-                gradient.addColorStop(1.0, 'rgba(255, 255, 255, 0)'); // Fully transparent at the edge
+                gradient.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
                 
                 context.fillStyle = gradient;
                 context.fillRect(0, 0, textureCanvas.width, textureCanvas.height);
@@ -526,96 +616,90 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
             }
 
-            // Function to handle mouse movement
             function onMouseMove(event) {
                 mouseX = (event.clientX - window.innerWidth / 2);
                 mouseY = (event.clientY - window.innerHeight / 2);
-                
-                // Calculate target rotation based on mouse position
                 targetRotationX = -mouseY * 0.0001;
                 targetRotationY = -mouseX * 0.0001;
             }
 
-            // Function to handle touch movement
             function onTouchMove(event) {
                 if (event.touches.length === 1) {
                     event.preventDefault();
                     mouseX = (event.touches[0].pageX - window.innerWidth / 2);
                     mouseY = (event.touches[0].pageY - window.innerHeight / 2);
-                    
                     targetRotationX = -mouseY * 0.0001;
                     targetRotationY = -mouseX * 0.0001;
                 }
             }
             
             let lastColorChangeTime = 0;
-            const colorChangeInterval = 1.0; // Change color every 1 second
+            const colorChangeInterval = 1.0;
             
             function animate() {
                 requestAnimationFrame(animate);
                 
                 const elapsedTime = clock.getElapsedTime();
                 
-                // Update target color over time, not based on mouse movement
                 if (elapsedTime - lastColorChangeTime > colorChangeInterval) {
                     lastColorChangeTime = elapsedTime;
                     currentColorIndex = (currentColorIndex + 1) % colors.length;
                     targetColor = colors[currentColorIndex];
                 }
 
-                // Smoothly interpolate rotation
                 currentRotationX += (targetRotationX - currentRotationX) * 0.05;
                 currentRotationY += (targetRotationY - currentRotationY) * 0.05;
                 
-                particleSystem.rotation.x = currentRotationX;
-                particleSystem.rotation.y = currentRotationY;
+                if (particleSystem) {
+                    particleSystem.rotation.x = currentRotationX;
+                    particleSystem.rotation.y = currentRotationY;
+                }
                 
-                // Smoothly interpolate color
                 currentColor.r += (targetColor.r - currentColor.r) * colorChangeSpeed;
                 currentColor.g += (targetColor.g - currentColor.g) * colorChangeSpeed;
                 currentColor.b += (targetColor.b - currentColor.b) * colorChangeSpeed;
                 
-                particleSystem.material.color.copy(currentColor);
-                
-                // Make particles move and respond to mouse
-                const time = Date.now() * 0.001;
-                const positions = particleSystem.geometry.attributes.position.array;
-                const originalPositions = particleSystem.geometry.attributes.originalPosition.array;
-                const sizes = particleSystem.geometry.attributes.size.array;
-                
-                for (let i = 0; i < positions.length; i += 3) {
-                    // Calculate distance from center
-                    const dx = originalPositions[i];
-                    const dy = originalPositions[i + 1];
-                    const dz = originalPositions[i + 2];
-                    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                    
-                    // Make particles move in subtle waves. Increased the time factor for more movement.
-                    // Increased the wave amplitude from 0.8 to 1.5 for more pronounced self-movement
-                    const waveFactor = 0.5 + 0.5 * Math.sin(time * 0.8 + dist * 0.01);
-                    
-                    // Apply mouse influence, but with a smaller multiplier to make the wave movement more dominant
-                    const mouseInfluence = dist < 70 ? 
-                        1.0 * (1 - dist/70) * (mouseX * 0.0001 + mouseY * 0.0001) : 
-                        0;
-                    
-                    positions[i] = originalPositions[i] + 
-                        waveFactor * Math.sin(time * 0.5 + i * 0.01) * 1.5 + 
-                        mouseInfluence * Math.sin(time * 3.0 + i * 0.01);
-                    
-                    positions[i + 1] = originalPositions[i + 1] + 
-                        waveFactor * Math.cos(time * 0.6 + i * 0.01) * 1.5 + 
-                        mouseInfluence * Math.cos(time * 3.0 + i * 0.01);
-                        
-                    positions[i + 2] = originalPositions[i + 2] + 
-                        waveFactor * Math.sin(time * 0.8 + i * 0.01) * 1.5;
+                if (particleSystem && particleSystem.material) {
+                    particleSystem.material.color.copy(currentColor);
                 }
                 
-                particleSystem.geometry.attributes.position.needsUpdate = true;
+                if (particleSystem && particleSystem.geometry && particleSystem.geometry.attributes.position && particleSystem.geometry.attributes.originalPosition) {
+                    const time = Date.now() * 0.001;
+                    const positions = particleSystem.geometry.attributes.position.array;
+                    const originalPositions = particleSystem.geometry.attributes.originalPosition.array;
+                    const sizes = particleSystem.geometry.attributes.size.array;
+                    
+                    for (let i = 0; i < positions.length; i += 3) {
+                        const dx = originalPositions[i];
+                        const dy = originalPositions[i + 1];
+                        const dz = originalPositions[i + 2];
+                        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                        
+                        const waveFactor = 0.5 + 0.5 * Math.sin(time * 0.8 + dist * 0.01);
+                        
+                        const mouseInfluence = dist < 70 ?
+                            1.0 * (1 - dist/70) * (mouseX * 0.0001 + mouseY * 0.0001) :
+                            0;
+                        
+                        positions[i] = originalPositions[i] +
+                            waveFactor * Math.sin(time * 0.5 + i * 0.01) * 1.5 +
+                            mouseInfluence * Math.sin(time * 3.0 + i * 0.01);
+                        
+                        positions[i + 1] = originalPositions[i + 1] +
+                            waveFactor * Math.cos(time * 0.6 + i * 0.01) * 1.5 +
+                            mouseInfluence * Math.cos(time * 3.0 + i * 0.01);
+                            
+                        positions[i + 2] = originalPositions[i + 2] +
+                            waveFactor * Math.sin(time * 0.8 + i * 0.01) * 1.5;
+                    }
+                    
+                    particleSystem.geometry.attributes.position.needsUpdate = true;
+                }
                 
-                // Make particles pulse with color changes
-                const pulse = 0.9 + 0.1 * Math.sin(time * 2);
-                particleSystem.material.opacity = 0.6 + 0.4 * pulse;
+                if (particleSystem && particleSystem.material) {
+                    const pulse = 0.9 + 0.1 * Math.sin(clock.getElapsedTime() * 2);
+                    particleSystem.material.opacity = 0.6 + 0.4 * pulse;
+                }
                 
                 renderer.render(scene, camera);
             }
@@ -623,315 +707,136 @@
             // --- Survey Functions ---
 
             /**
-             * Shows a custom message box instead of using an alert.
-             * @param {string} message The message to display.
+             * Renders the current question and its options.
              */
-            const showMessageBox = (message) => {
-                messageText.textContent = message;
-                messageBox.classList.remove('scale-95', 'opacity-0', 'pointer-events-none');
-                messageBox.classList.add('scale-100', 'opacity-100', 'pointer-events-auto');
+            const renderQuestion = () => {
+                const questionData = surveyData.questions[currentQuestionIndex];
+                let content = `
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-4">${questionData.question}</h2>
+                `;
+                if (questionData.type === "multiple-choice") {
+                    questionData.options.forEach((option, index) => {
+                        content += `
+                            <button data-answer="${option}" class="w-full btn-secondary text-left mb-2">${option}</button>
+                        `;
+                    });
+                } else if (questionData.type === "short-answer") {
+                    content += `
+                        <input type="text" id="short-answer-input" class="form-input mb-4" placeholder="Type your answer here">
+                        <button id="next-button" class="btn-primary w-full">Next</button>
+                    `;
+                }
+                questionContainer.innerHTML = content;
+                
+                if (questionData.type === "multiple-choice") {
+                    document.querySelectorAll('#question-container button').forEach(button => {
+                        button.addEventListener('click', handleAnswer);
+                    });
+                } else if (questionData.type === "short-answer") {
+                    document.getElementById('next-button').addEventListener('click', handleAnswer);
+                }
             };
 
             /**
-             * Submits survey data to a Google Sheet via a Google Apps Script.
-             * You MUST replace "YOUR_SCRIPT_URL" with the URL of your deployed script.
-             * @param {object} studentInfo Student information object.
-             * @param {Array} surveyAnswers Array of survey answer objects.
+             * Handles the user's answer and moves to the next question.
+             * @param {Event} event The click event object.
              */
-            function submitSurvey(studentInfo, surveyAnswers) {
-                // You must replace this URL with your Google Apps Script Web App URL
-                // The URL below is a dummy placeholder. You need to follow the instructions to generate your own.
-                const scriptUrl = "https://script.google.com/macros/s/AKfycbwc8PXUQofIyzBKwyWy_8D8vOekirA_wMO54L6gEkGqB0yKhsgShhYngj_WaTXv8H9xuA/exec";
+            const handleAnswer = (event) => {
+                const questionData = surveyData.questions[currentQuestionIndex];
+                let answer;
+                if (questionData.type === "multiple-choice") {
+                    answer = event.target.getAttribute('data-answer');
+                } else if (questionData.type === "short-answer") {
+                    const input = document.getElementById('short-answer-input');
+                    answer = input.value.trim();
+                    if (!answer) {
+                        showMessageBox("Please provide an answer to continue.");
+                        return;
+                    }
+                }
 
-                fetch(scriptUrl, {
-                    method: "POST",
-                    body: JSON.stringify({
-                        name: studentInfo.name,
-                        year: studentInfo.year,
-                        course: studentInfo.course,
-                        answers: surveyAnswers
-                    }),
-                    headers: { "Content-Type": "application/json" }
-                })
-                .then(res => {
-                    if (!res.ok) {
-                        // FIX: Corrected syntax to use backticks for the template literal string.
-                        throw new Error(`HTTP error! status: ${res.status}`);
-                    }
-                    return res.text(); // Correctly get the response as text
-                })
-                .then(responseText => {
-                    if (responseText.trim() === "Success") {
-                        showMessageBox("Survey submitted successfully!");
-                        console.log("Saved to Google Sheets:", responseText);
-                    } else {
-                        // This will catch any unexpected plain text responses
-                        throw new Error("Unexpected response from server.");
-                    }
-                })
-                .catch(err => {
-                    showMessageBox("Error saving survey. Please try again.");
-                    console.error("Error saving survey:", err);
+                surveyAnswers.push({
+                    question: questionData.question,
+                    answer: answer
                 });
-            }
 
-            /**
-             * Validates student information form
-             */
-            const validateStudentInfo = () => {
-                if (!studentNameInput.value.trim()) {
-                    // Replaced alert with a simple console log for a better user experience
-                    showMessageBox("Please enter your name");
-                    studentNameInput.focus();
-                    return false;
+                currentQuestionIndex++;
+                updateProgress();
+
+                if (currentQuestionIndex < surveyData.questions.length) {
+                    renderQuestion();
+                } else {
+                    completeSurvey();
+                }
+            };
+
+            const updateProgress = () => {
+                const totalQuestions = surveyData.questions.length;
+                progressDisplay.textContent = `${currentQuestionIndex + 1}/${totalQuestions}`;
+                const progressPercentage = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+                progressFill.style.width = `${progressPercentage}%`;
+            };
+
+            const updateTimer = () => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    completeSurvey();
+                    showMessageBox("Time's up! The survey has been automatically submitted.");
+                } else {
+                    timeLeft--;
+                }
+            };
+            
+            const startSurvey = () => {
+                // Validate student info fields
+                if (!studentNameInput.value.trim() || !studentYearInput.value.trim()) {
+                    showMessageBox("Please fill in your name and year level to begin the survey.");
+                    return;
                 }
                 
-                if (!studentYearInput.value) {
-                    // Replaced alert with a simple console log for a better user experience
-                    showMessageBox("Please select your year level");
-                    studentYearInput.focus();
-                    return false;
-                }
-                
-                // Save student info
+                // Save student info to state
                 studentInfo = {
                     name: studentNameInput.value.trim(),
                     year: studentYearInput.value,
                     course: studentCourseInput.value.trim()
                 };
-                
-                return true;
-            };
 
-            /**
-             * Renders the current question based on its type.
-             */
-            const renderQuestion = () => {
-                if (currentQuestionIndex >= surveyData.questions.length) {
-                    completeSurvey();
-                    return;
-                }
-
-                const questionData = surveyData.questions[currentQuestionIndex];
-                questionContainer.innerHTML = ''; // Clear previous content
-
-                // Update progress display
-                const progressPercent = ((currentQuestionIndex + 1) / surveyData.questions.length) * 100;
-                progressDisplay.textContent = `${currentQuestionIndex + 1}/${surveyData.questions.length}`;
-                progressFill.style.width = `${progressPercent}%`;
-
-                const questionElement = document.createElement('h2');
-                questionElement.className = "text-2xl font-bold text-white mb-6";
-                questionElement.textContent = `Q${currentQuestionIndex + 1}. ${questionData.question}`;
-                questionContainer.appendChild(questionElement);
-
-                const answerSection = document.createElement('div');
-                answerSection.className = "space-y-4";
-
-                if (questionData.type === "multiple-choice") {
-                    questionData.options.forEach((option, index) => {
-                        const optionLabel = document.createElement('label');
-                        optionLabel.className = "flex items-center space-x-3 text-lg text-gray-200 p-3 rounded-lg hover:bg-[rgba(255,255,255,0.1)] transition-colors cursor-pointer";
-                        const optionInput = document.createElement('input');
-                        optionInput.type = "radio";
-                        optionInput.name = `question-${currentQuestionIndex}`;
-                        optionInput.value = option;
-                        optionInput.className = "form-radio h-5 w-5 text-[#4169E1] focus:ring-[#4169E1]";
-                        optionLabel.appendChild(optionInput);
-                        optionLabel.appendChild(document.createTextNode(option));
-                        answerSection.appendChild(optionLabel);
-                    });
-                } else if (questionData.type === "short-answer") {
-                    const shortAnswerInput = document.createElement('textarea');
-                    shortAnswerInput.rows = 3;
-                    shortAnswerInput.placeholder = "Enter your response here...";
-                    shortAnswerInput.className = "w-full p-4 border border-[rgba(255,255,255,0.3)] bg-[rgba(255,255,255,0.2)] text-white rounded-lg focus:ring-2 focus:ring-[#4169E1] focus:border-transparent transition-all";
-                    shortAnswerInput.id = "short-answer-input";
-                    answerSection.appendChild(shortAnswerInput);
-                }
-
-                questionContainer.appendChild(answerSection);
-
-                const navButtons = document.createElement('div');
-                navButtons.className = "mt-6 flex justify-between";
-                
-                if (currentQuestionIndex > 0) {
-                    const prevButton = document.createElement('button');
-                    prevButton.textContent = "Previous";
-                    prevButton.className = "btn-secondary";
-                    prevButton.onclick = previousQuestion;
-                    navButtons.appendChild(prevButton);
-                } else {
-                    // Add empty div for spacing
-                    navButtons.appendChild(document.createElement('div'));
-                }
-                
-                const nextButton = document.createElement('button');
-                nextButton.textContent = currentQuestionIndex === surveyData.questions.length - 1 ? "Complete Survey" : "Next";
-                nextButton.className = "btn-primary";
-                nextButton.onclick = nextQuestion;
-                navButtons.appendChild(nextButton);
-
-                questionContainer.appendChild(navButtons);
-            };
-
-            /**
-             * Moves to the next question
-             */
-            const nextQuestion = () => {
-                let userAnswer = null;
-                const questionData = surveyData.questions[currentQuestionIndex];
-
-                if (questionData.type === "multiple-choice") {
-                    const selectedOption = document.querySelector(`input[name="question-${currentQuestionIndex}"]:checked`);
-                    if (selectedOption) {
-                        userAnswer = selectedOption.value;
-                    } else {
-                        // Replaced alert with a simple console log for a better user experience
-                        showMessageBox("Please select an answer before continuing");
-                        return;
-                    }
-                } else if (questionData.type === "short-answer") {
-                    const shortAnswerInput = document.getElementById('short-answer-input');
-                    userAnswer = shortAnswerInput.value.trim();
-                    if (!userAnswer) {
-                        // Replaced alert with a simple console log for a better user experience
-                        showMessageBox("Please provide an answer before continuing");
-                        return;
-                    }
-                }
-
-                // Save the answer
-                surveyAnswers.push({
-                    question: questionData.question,
-                    userAnswer: userAnswer
-                });
-                
-                // Move to the next question or finish
-                currentQuestionIndex++;
-                renderQuestion();
-            };
-
-            /**
-             * Moves to the previous question
-             */
-            const previousQuestion = () => {
-                // Remove the last answer
-                if (surveyAnswers.length > 0) {
-                    surveyAnswers.pop();
-                }
-                
-                // Move to the previous question
-                currentQuestionIndex--;
-                renderQuestion();
-            };
-
-            /**
-             * Updates the timer display.
-             */
-            const updateTimer = () => {
-                const minutes = Math.floor(timeLeft / 60);
-                const seconds = timeLeft % 60;
-                timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    completeSurvey();
-                } else {
-                    timeLeft--;
-                }
-            };
-
-            /**
-             * Completes the survey and shows the completion screen.
-             */
-            const completeSurvey = () => {
-                // Stop the timer
-                clearInterval(timerInterval);
-                
-                // Hide survey screen and show completion screen
-                surveyScreen.classList.add('hidden');
-                completionScreen.classList.remove('hidden');
-
-                // Exit full screen
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-                
-                // In a real implementation, you would save the data here
-                submitSurvey(studentInfo, surveyAnswers);
-            };
-
-            // --- Event Listeners for Survey Logic ---
-            startButton.addEventListener('click', () => {
-                // Validate student info
-                if (!validateStudentInfo()) {
-                    return;
-                }
-
-                // Request full-screen mode for the entire document
-                try {
-                    if (document.documentElement.requestFullscreen) {
-                        document.documentElement.requestFullscreen();
-                    }
-                } catch (e) {
-                    console.error("Failed to enter full-screen mode:", e);
-                }
-                
-                // Hide start screen and show survey screen
                 startScreen.classList.add('hidden');
                 surveyScreen.classList.remove('hidden');
-                
-                // Start the timer
-                updateTimer();
-                timerInterval = setInterval(updateTimer, 1000);
 
-                // Display the first question
-                renderQuestion();
-            });
-
-            restartButton.addEventListener('click', () => {
                 // Reset state
                 currentQuestionIndex = 0;
                 surveyAnswers = [];
                 timeLeft = 300;
+                updateProgress();
                 
-                // Hide completion screen and show start screen
+                renderQuestion();
+                timerInterval = setInterval(updateTimer, 1000);
+            };
+
+            const completeSurvey = () => {
+                clearInterval(timerInterval);
+                surveyScreen.classList.add('hidden');
+                completionScreen.classList.remove('hidden');
+                submitSurvey(studentInfo, surveyAnswers);
+            };
+
+            const resetSurvey = () => {
                 completionScreen.classList.add('hidden');
                 startScreen.classList.remove('hidden');
-                
-                // Reset form
-                studentNameInput.value = "";
-                studentYearInput.value = "";
-                studentCourseInput.value = "";
-            });
+            };
 
-            // --- Anti-Cheating Event Listeners ---
-            
-            // Disable right-click
-            document.addEventListener('contextmenu', e => e.preventDefault());
+            // Event Listeners
+            startButton.addEventListener('click', startSurvey);
+            restartButton.addEventListener('click', resetSurvey);
 
-            // Block restricted keys
-            document.addEventListener('keydown', e => {
-                if (
-                    e.key === 'F5' ||
-                    (e.ctrlKey && e.key === 'r') ||
-                    e.key === 'F12' ||
-                    (e.ctrlKey && e.shiftKey && (e.key === 'i' || e.key === 'j')) ||
-                    (e.ctrlKey && e.key === 'u') ||
-                    (e.ctrlKey && e.key === 'c') ||
-                    (e.ctrlKey && e.key === 'v') ||
-                    (e.ctrlKey && e.key === 'x') ||
-                    (e.ctrlKey && e.key === 'a') ||
-                    (e.ctrlKey && e.key === 's')
-                ) {
-                    e.preventDefault();
-                    console.warn(`Blocked restricted key: ${e.key}`);
-                }
-            });
-
-            // Initialize Three.js scene
-            initThreeJS();
+            window.onload = function() {
+                initThreeJS();
+                initializeFirestore();
+            };
 
         })();
     </script>
