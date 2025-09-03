@@ -69,8 +69,8 @@
 
         .form-input:focus {
             outline: none;
-            border-color: #D4AF37;
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.3);
+            border-color: #4169E1;
+            box-shadow: 0 0 0 3px rgba(65, 105, 225, 0.3);
             background: rgba(255, 255, 255, 0.25);
         }
 
@@ -83,18 +83,18 @@
 
         /* Buttons */
         .btn-primary {
-            background: linear-gradient(135deg, #D4AF37 0%, #BF9520 100%);
+            background: linear-gradient(135deg, #4169E1 0%, #2d46a6 100%);
             color: #0D2239;
             font-weight: bold;
             padding: 0.75rem 2rem;
             border-radius: 50px;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 4px 15px rgba(65, 105, 225, 0.3);
         }
 
         .btn-primary:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+            box-shadow: 0 8px 20px rgba(65, 105, 225, 0.4);
         }
 
         .btn-secondary {
@@ -122,7 +122,7 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #D4AF37 0%, #FFD700 100%);
+            background: linear-gradient(90deg, #4169E1 0%, #6495ED 100%);
             border-radius: 4px;
             transition: width 0.5s ease-in-out;
         }
@@ -167,8 +167,10 @@
 
     <!-- Start Screen -->
     <div id="start-screen" class="card p-8 rounded-2xl w-full max-w-2xl text-center floating">
-        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#BF9520] flex items-center justify-center shadow-lg">
-            <span class="text-2xl font-bold text-[#0D2239]">CEC</span>
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#4169E1] to-[#2d46a6] flex items-center justify-center shadow-lg">
+            <!-- Replaced the CEC text with an image of the logo -->
+            <!-- Use a placeholder image here. For a live app, replace the src with the actual logo URL. -->
+            <img src="https://placehold.co/96x96/FFFFFF/0D2239?text=CEC+Logo" alt="Cebu Eastern College Logo" class="w-full h-full rounded-full p-2">
         </div>
         <h1 class="text-5xl md:text-6xl font-extrabold text-white mb-4 cec-title">Campus Navigation System</h1>
         <p class="text-lg text-gray-200 mb-8">Help us improve campus navigation by completing this survey</p>
@@ -218,8 +220,8 @@
     <div id="survey-screen" class="hidden w-full max-w-2xl flex flex-col items-center">
         <!-- Header with Progress and Timer -->
         <div class="card rounded-2xl p-6 mb-6 w-full flex justify-between items-center">
-            <div class="text-lg font-semibold text-white">Progress: <span id="progress" class="text-[#D4AF37] font-bold">1/15</span></div>
-            <div class="text-lg font-semibold text-white">Time: <span id="timer" class="text-[#D4AF37] font-bold">05:00</span></div>
+            <div class="text-lg font-semibold text-white">Progress: <span id="progress" class="text-[#4169E1] font-bold">1/15</span></div>
+            <div class="text-lg font-semibold text-white">Time: <span id="timer" class="text-[#4169E1] font-bold">05:00</span></div>
         </div>
 
         <!-- Progress Bar -->
@@ -237,8 +239,8 @@
 
     <!-- Completion Screen -->
     <div id="completion-screen" class="hidden card p-8 rounded-2xl w-full max-w-2xl text-center floating">
-        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#BF9520] flex items-center justify-center shadow-lg">
-            <span class="text-2xl font-bold text-[#0D2239]">CEC</span>
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#4169E1] to-[#2d46a6] flex items-center justify-center shadow-lg">
+            <img src="https://placehold.co/96x96/FFFFFF/0D2239?text=CEC+Logo" alt="Cebu Eastern College Logo" class="w-full h-full rounded-full p-2">
         </div>
         <h2 class="text-4xl font-extrabold text-white mb-4 cec-title">Survey Complete!</h2>
         <p class="text-lg text-gray-200 mb-6">Thank you for participating in our survey.</p>
@@ -356,18 +358,22 @@
             let mouseX = 0, mouseY = 0;
             let targetRotationX = 0, targetRotationY = 0;
             let currentRotationX = 0, currentRotationY = 0;
+            // The rainbow colors
             const colors = [
-                new THREE.Color(0xFFD700), // Gold
-                new THREE.Color(0x00A0FF), // Blue
-                new THREE.Color(0xFF4500), // OrangeRed
-                new THREE.Color(0x9370DB), // Purple
-                new THREE.Color(0x32CD32)  // LimeGreen
+                new THREE.Color(0xFF0000), // Red
+                new THREE.Color(0xFF7F00), // Orange
+                new THREE.Color(0xFFFF00), // Yellow
+                new THREE.Color(0x00FF00), // Green
+                new THREE.Color(0x0000FF), // Blue
+                new THREE.Color(0x4B0082), // Indigo
+                new THREE.Color(0x9400D3)  // Violet
             ];
             let currentColorIndex = 0;
             let targetColor = colors[0];
             let currentColor = colors[0];
-            let colorChangeSpeed = 0.02;
+            let colorChangeSpeed = 0.005; // Reduced speed for a softer transition
             let particleSystem;
+            let clock = new THREE.Clock(); // For time-based color changes
 
             // --- DOM Elements ---
             const body = document.body;
@@ -463,7 +469,7 @@
                 geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
                 geometry.setAttribute('originalPosition', new THREE.BufferAttribute(originalPositions, 3));
                 
-                // Create a glowing circular texture
+                // Create a glowing circular texture with a solid inner circle and a more visible glow
                 const textureCanvas = document.createElement('canvas');
                 textureCanvas.width = 128;
                 textureCanvas.height = 128;
@@ -477,10 +483,12 @@
                     textureCanvas.height / 2,
                     textureCanvas.width / 2
                 );
-                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-                gradient.addColorStop(0.2, 'rgba(255, 215, 0, 0.8)');
-                gradient.addColorStop(0.5, 'rgba(255, 140, 0, 0.4)');
-                gradient.addColorStop(1, 'rgba(255, 69, 0, 0)');
+                
+                // Define the texture stops for the solid inner circle and the more visible glow
+                gradient.addColorStop(0.0, 'rgba(255, 255, 255, 1)'); // Solid white core
+                gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.8)'); // Start the glowing fade
+                gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.2)');
+                gradient.addColorStop(1.0, 'rgba(255, 255, 255, 0)'); // Fully transparent at the edge
                 
                 context.fillStyle = gradient;
                 context.fillRect(0, 0, textureCanvas.width, textureCanvas.height);
@@ -515,19 +523,6 @@
                 // Calculate target rotation based on mouse position
                 targetRotationX = -mouseY * 0.0001;
                 targetRotationY = -mouseX * 0.0001;
-                
-                // Change color based on mouse speed
-                const speed = Math.sqrt(mouseX * mouseX + mouseY * mouseY);
-                if (speed > 50) {
-                    // Increase color change speed with mouse speed
-                    colorChangeSpeed = 0.02 + (speed / 1000) * 0.1;
-                    
-                    // Occasionally change target color when moving fast
-                    if (Math.random() < 0.01) {
-                        currentColorIndex = (currentColorIndex + 1) % colors.length;
-                        targetColor = colors[currentColorIndex];
-                    }
-                }
             }
 
             // Function to handle touch movement
@@ -539,23 +534,24 @@
                     
                     targetRotationX = -mouseY * 0.0001;
                     targetRotationY = -mouseX * 0.0001;
-                    
-                    // Change color based on touch speed
-                    const speed = Math.sqrt(mouseX * mouseX + mouseY * mouseY);
-                    if (speed > 50) {
-                        colorChangeSpeed = 0.02 + (speed / 1000) * 0.1;
-                        
-                        if (Math.random() < 0.01) {
-                            currentColorIndex = (currentColorIndex + 1) % colors.length;
-                            targetColor = colors[currentColorIndex];
-                        }
-                    }
                 }
             }
+            
+            let lastColorChangeTime = 0;
+            const colorChangeInterval = 1.0; // Change color every 1 second
             
             function animate() {
                 requestAnimationFrame(animate);
                 
+                const elapsedTime = clock.getElapsedTime();
+                
+                // Update target color over time, not based on mouse movement
+                if (elapsedTime - lastColorChangeTime > colorChangeInterval) {
+                    lastColorChangeTime = elapsedTime;
+                    currentColorIndex = (currentColorIndex + 1) % colors.length;
+                    targetColor = colors[currentColorIndex];
+                }
+
                 // Smoothly interpolate rotation
                 currentRotationX += (targetRotationX - currentRotationX) * 0.05;
                 currentRotationY += (targetRotationY - currentRotationY) * 0.05;
@@ -675,7 +671,7 @@
                         optionInput.type = "radio";
                         optionInput.name = `question-${currentQuestionIndex}`;
                         optionInput.value = option;
-                        optionInput.className = "form-radio h-5 w-5 text-[#D4AF37] focus:ring-[#D4AF37]";
+                        optionInput.className = "form-radio h-5 w-5 text-[#4169E1] focus:ring-[#4169E1]";
                         optionLabel.appendChild(optionInput);
                         optionLabel.appendChild(document.createTextNode(option));
                         answerSection.appendChild(optionLabel);
@@ -684,7 +680,7 @@
                     const shortAnswerInput = document.createElement('textarea');
                     shortAnswerInput.rows = 3;
                     shortAnswerInput.placeholder = "Enter your response here...";
-                    shortAnswerInput.className = "w-full p-4 border border-[rgba(255,255,255,0.3)] bg-[rgba(255,255,255,0.2)] text-white rounded-lg focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent transition-all";
+                    shortAnswerInput.className = "w-full p-4 border border-[rgba(255,255,255,0.3)] bg-[rgba(255,255,255,0.2)] text-white rounded-lg focus:ring-2 focus:ring-[#4169E1] focus:border-transparent transition-all";
                     shortAnswerInput.id = "short-answer-input";
                     answerSection.appendChild(shortAnswerInput);
                 }
@@ -791,6 +787,11 @@
                 // Hide survey screen and show completion screen
                 surveyScreen.classList.add('hidden');
                 completionScreen.classList.remove('hidden');
+
+                // Exit full screen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
                 
                 // In a real implementation, you would save the data here
                 console.log("Survey completed:", {
@@ -804,6 +805,15 @@
                 // Validate student info
                 if (!validateStudentInfo()) {
                     return;
+                }
+
+                // Request full-screen mode for the entire document
+                try {
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen();
+                    }
+                } catch (e) {
+                    console.error("Failed to enter full-screen mode:", e);
                 }
                 
                 // Hide start screen and show survey screen
