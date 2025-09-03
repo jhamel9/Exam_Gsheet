@@ -3,16 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEC Campus Navigation - Survey System</title>
+    <title>CEC Campus Navigation - Interactive Survey</title>
+    <!-- Use Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js for 3D graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Custom styles for the survey interface */
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0D2239 0%, #1a3a5f 100%);
+            background-color: #0D2239;
             color: #fff;
+            transition: all 0.3s ease-in-out;
             overflow-x: hidden;
         }
 
@@ -36,6 +41,17 @@
             box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
         }
 
+        /* 3D Canvas */
+        #campus-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Form styling */
         .form-input {
             background: rgba(255, 255, 255, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -65,6 +81,7 @@
             color: #fff;
         }
 
+        /* Buttons */
         .btn-primary {
             background: linear-gradient(135deg, #4169E1 0%, #2d46a6 100%);
             color: #fff;
@@ -95,6 +112,7 @@
             transform: translateY(-3px);
         }
 
+        /* Progress bar */
         .progress-bar {
             height: 8px;
             background: rgba(255, 255, 255, 0.1);
@@ -109,6 +127,7 @@
             transition: width 0.5s ease-in-out;
         }
 
+        /* Question animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -118,6 +137,19 @@
             animation: fadeIn 0.5s ease-out;
         }
 
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .card {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+            
+            .cec-title {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Floating elements */
         .floating {
             animation: float 6s ease-in-out infinite;
         }
@@ -127,45 +159,23 @@
             50% { transform: translateY(-10px); }
             100% { transform: translateY(0px); }
         }
-
-        .particle {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.5);
-            animation: float-particle 15s infinite linear;
-        }
-
-        @keyframes float-particle {
-            0% {
-                transform: translateY(0) translateX(0);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100vh) translateX(100px);
-                opacity: 0;
-            }
-        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
-    <!-- Background particles -->
-    <div id="particles-container" class="fixed inset-0 z-0 overflow-hidden"></div>
+    <!-- 3D Campus Canvas -->
+    <canvas id="campus-canvas"></canvas>
 
     <!-- Message Box -->
     <div id="message-box" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 p-6 rounded-lg shadow-xl text-center z-50 transition-all duration-300 transform scale-95 opacity-0 pointer-events-none" style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);">
         <p id="message-text" class="text-white text-lg font-semibold"></p>
-        <button onclick="hideMessageBox()" class="mt-4 px-4 py-2 rounded-full text-white bg-[#4169E1] hover:bg-[#2d46a6] transition-colors">OK</button>
+        <button onclick="document.getElementById('message-box').classList.remove('scale-100', 'opacity-100', 'pointer-events-auto'); document.getElementById('message-box').classList.add('scale-95', 'opacity-0', 'pointer-events-none');" class="mt-4 px-4 py-2 rounded-full text-white bg-[#4169E1] hover:bg-[#2d46a6] transition-colors">OK</button>
     </div>
 
     <!-- Start Screen -->
-    <div id="start-screen" class="card p-8 rounded-2xl w-full max-w-2xl text-center floating relative z-10">
+    <div id="start-screen" class="card p-8 rounded-2xl w-full max-w-2xl text-center floating">
         <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#4169E1] to-[#2d46a6] flex items-center justify-center shadow-lg">
+            <!-- Replaced the CEC text with an image of the logo -->
+            <!-- Use a placeholder image here. For a live app, replace the src with the actual logo URL. -->
             <img src="https://placehold.co/96x96/FFFFFF/0D2239?text=CEC+Logo" alt="Cebu Eastern College Logo" class="w-full h-full rounded-full p-2">
         </div>
         <h1 class="text-5xl md:text-6xl font-extrabold text-white mb-4 cec-title">Campus Navigation System</h1>
@@ -213,7 +223,7 @@
     </div>
 
     <!-- Survey Screen -->
-    <div id="survey-screen" class="hidden w-full max-w-2xl flex flex-col items-center relative z-10">
+    <div id="survey-screen" class="hidden w-full max-w-2xl flex flex-col items-center">
         <!-- Header with Progress and Timer -->
         <div class="card rounded-2xl p-6 mb-6 w-full flex justify-between items-center">
             <div class="text-lg font-semibold text-white">Progress: <span id="progress" class="text-[#4169E1] font-bold">1/15</span></div>
@@ -234,7 +244,7 @@
     </div>
 
     <!-- Completion Screen -->
-    <div id="completion-screen" class="hidden card p-8 rounded-2xl w-full max-w-2xl text-center floating relative z-10">
+    <div id="completion-screen" class="hidden card p-8 rounded-2xl w-full max-w-2xl text-center floating">
         <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#4169E1] to-[#2d46a6] flex items-center justify-center shadow-lg">
             <img src="https://placehold.co/96x96/FFFFFF/0D2239?text=CEC+Logo" alt="Cebu Eastern College Logo" class="w-full h-full rounded-full p-2">
         </div>
@@ -257,373 +267,671 @@
 
     <!-- Script Block -->
     <script>
-        // --- Survey Data ---
-        const surveyData = {
-            questions: [
-                {
-                    type: "multiple-choice",
-                    question: "How often do you have difficulty finding classrooms or offices on campus?",
-                    options: ["Very Often", "Often", "Sometimes", "Rarely", "Never"],
-                },
-                {
-                    type: "multiple-choice",
-                    question: "Which feature would be most valuable in a campus navigation app?",
-                    options: ["Room Navigation", "Faculty Directory", "Emergency Exits", "Event Locations", "All of the above"],
-                },
-                {
-                    type: "multiple-choice",
-                    question: "How do you currently find your way around campus?",
-                    options: ["Ask someone for directions", "Use printed maps", "Trial and error", "I already know my way", "Other"],
-                },
-                {
-                    type: "multiple-choice",
-                    question: "Have you ever been late to class because you couldn't find the room?",
-                    options: ["Yes, frequently", "Yes, occasionally", "No, never"],
-                },
-                {
-                    type: "multiple-choice",
-                    question: "How important is an emergency exit guide in a campus navigation system?",
-                    options: ["Extremely Important", "Very Important", "Somewhat Important", "Not Important"],
-                },
-                {
-                    type: "multiple-choice",
-                    question: "Would you use a feature that shows real-time event locations on campus?",
-                    options: ["Definitely", "Probably", "Maybe", "Probably Not", "Definitely Not"],
-                },
-                {
-                    type: "multiple-choice",
-                    question: "How often do you need to find a faculty member's office?",
-                    options: ["Daily", "Weekly", "Monthly", "Rarely", "Never"],
-                },
-                {
-                    type: "multiple-choice",
-                    question: "Which device would you most likely use for campus navigation?",
-                    options: ["Smartphone", "Tablet", "Laptop", "Desktop Computer", "Information Kiosk"],
-                },
-                {
-                    type: "multiple-choice",
-                    question: "How satisfied are you with the current signage and wayfinding on campus?",
-                    options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"],
-                },
-                {
-                    type: "short-answer",
-                    question: "What specific location on campus do you find most difficult to navigate?",
-                },
-                {
-                    type: "short-answer",
-                    question: "What additional features would you like to see in a campus navigation app?",
-                },
-                {
-                    type: "multiple-choice",
-                    question: "How likely are you to use a campus navigation system if it were available?",
-                    options: ["Extremely Likely", "Very Likely", "Somewhat Likely", "Not Likely"],
-                },
-                {
-                    type: "multiple-choice",
-                    question: "Which operating system do you primarily use on your mobile device?",
-                    options: ["Android", "iOS", "I don't use a mobile device", "Other"],
-                },
-                {
-                    type: "multiple-choice",
-                    question: "How would you prefer to access the campus navigation system?",
-                    options: ["Mobile App", "Web Browser", "Both", "Information Kiosks"],
-                },
-                {
-                    type: "multiple-choice",
-                    question: "Would you be interested in a feature that allows students to create study group meetings with specific locations?",
-                    options: ["Yes, definitely", "Maybe", "No, not interested"],
-                }
-            ]
-        };
-
-        // Global state variables
-        let currentQuestionIndex = 0;
-        let surveyAnswers = [];
-        let timerInterval;
-        let timeLeft = 300; // 5 minutes in seconds
-        let studentInfo = {
-            name: "",
-            year: "",
-            course: ""
-        };
-
-        // --- DOM Elements ---
-        const body = document.body;
-        const startScreen = document.getElementById('start-screen');
-        const surveyScreen = document.getElementById('survey-screen');
-        const completionScreen = document.getElementById('completion-screen');
-        const startButton = document.getElementById('start-button');
-        const restartButton = document.getElementById('restart-button');
-        const timerDisplay = document.getElementById('timer');
-        const progressDisplay = document.getElementById('progress');
-        const progressFill = document.getElementById('progress-fill');
-        const questionContainer = document.getElementById('question-container');
-        const particlesContainer = document.getElementById('particles-container');
-        
-        // Student info form elements
-        const studentNameInput = document.getElementById('student-name');
-        const studentYearInput = document.getElementById('student-year');
-        const studentCourseInput = document.getElementById('student-course');
-        
-        // Message box elements
-        const messageBox = document.getElementById('message-box');
-        const messageText = document.getElementById('message-text');
-
-        // --- Background Particles ---
-        function createParticles() {
-            for (let i = 0; i < 50; i++) {
-                const particle = document.createElement('div');
-                particle.classList.add('particle');
-                
-                // Random size between 2 and 5
-                const size = Math.random() * 3 + 2;
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                
-                // Random position
-                particle.style.left = `${Math.random() * 100}%`;
-                particle.style.top = `${Math.random() * 100}%`;
-                
-                // Random animation duration
-                const duration = Math.random() * 10 + 15;
-                particle.style.animationDuration = `${duration}s`;
-                
-                // Random delay
-                const delay = Math.random() * 5;
-                particle.style.animationDelay = `${delay}s`;
-                
-                particlesContainer.appendChild(particle);
-            }
-        }
-
-        // --- Message Box Functions ---
-        function showMessageBox(message) {
-            messageText.textContent = message;
-            messageBox.classList.remove('scale-95', 'opacity-0', 'pointer-events-none');
-            messageBox.classList.add('scale-100', 'opacity-100', 'pointer-events-auto');
-        }
-
-        function hideMessageBox() {
-            messageBox.classList.remove('scale-100', 'opacity-100', 'pointer-events-auto');
-            messageBox.classList.add('scale-95', 'opacity-0', 'pointer-events-none');
-        }
-
-        // --- Survey Functions ---
-        function submitSurvey(studentInfo, surveyAnswers) {
-            // Show loading message
-            showMessageBox("Submitting your survey...");
-            
-            // In a real implementation, you would send this data to your server
-            // For demonstration, we'll simulate a successful submission after a short delay
-            setTimeout(() => {
-                // Simulate successful submission
-                console.log("Student Info:", studentInfo);
-                console.log("Survey Answers:", surveyAnswers);
-                
-                // Show success message
-                showMessageBox("Survey submitted successfully! Thank you for your participation.");
-                
-                // In a real implementation, you would redirect or show a success screen
-            }, 2000);
-        }
-
-        function validateStudentInfo() {
-            if (!studentNameInput.value.trim()) {
-                showMessageBox("Please enter your name");
-                studentNameInput.focus();
-                return false;
-            }
-            
-            if (!studentYearInput.value) {
-                showMessageBox("Please select your year level");
-                studentYearInput.focus();
-                return false;
-            }
-            
-            // Save student info
-            studentInfo = {
-                name: studentNameInput.value.trim(),
-                year: studentYearInput.value,
-                course: studentCourseInput.value.trim()
+        // Use an IIFE (Immediately Invoked Function Expression) to avoid polluting the global scope
+        (function() {
+            // --- Survey Data ---
+            const surveyData = {
+                questions: [
+                    {
+                        type: "multiple-choice",
+                        question: "How often do you have difficulty finding classrooms or offices on campus?",
+                        options: ["Very Often", "Often", "Sometimes", "Rarely", "Never"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Which feature would be most valuable in a campus navigation app?",
+                        options: ["Room Navigation", "Faculty Directory", "Emergency Exits", "Event Locations", "All of the above"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How do you currently find your way around campus?",
+                        options: ["Ask someone for directions", "Use printed maps", "Trial and error", "I already know my way", "Other"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Have you ever been late to class because you couldn't find the room?",
+                        options: ["Yes, frequently", "Yes, occasionally", "No, never"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How important is an emergency exit guide in a campus navigation system?",
+                        options: ["Extremely Important", "Very Important", "Somewhat Important", "Not Important"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Would you use a feature that shows real-time event locations on campus?",
+                        options: ["Definitely", "Probably", "Maybe", "Probably Not", "Definitely Not"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How often do you need to find a faculty member's office?",
+                        options: ["Daily", "Weekly", "Monthly", "Rarely", "Never"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Which device would you most likely use for campus navigation?",
+                        options: ["Smartphone", "Tablet", "Laptop", "Desktop Computer", "Information Kiosk"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How satisfied are you with the current signage and wayfinding on campus?",
+                        options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"],
+                    },
+                    {
+                        type: "short-answer",
+                        question: "What specific location on campus do you find most difficult to navigate?",
+                    },
+                    {
+                        type: "short-answer",
+                        question: "What additional features would you like to see in a campus navigation app?",
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How likely are you to use a campus navigation system if it were available?",
+                        options: ["Extremely Likely", "Very Likely", "Somewhat Likely", "Not Likely"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Which operating system do you primarily use on your mobile device?",
+                        options: ["Android", "iOS", "I don't use a mobile device", "Other"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How would you prefer to access the campus navigation system?",
+                        options: ["Mobile App", "Web Browser", "Both", "Information Kiosks"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Would you be interested in a feature that allows students to create study group meetings with specific locations?",
+                        options: ["Yes, definitely", "Maybe", "No, not interested"],
+                    }
+                ]
             };
+
+            // Global state variables
+            let currentQuestionIndex = 0;
+            let surveyAnswers = [];
+            let timerInterval;
+            let timeLeft = 300; // 5 minutes in seconds
+            let studentInfo = {
+                name: "",
+                year: "",
+                course: ""
+            };
+
+            // Three.js variables
+            let scene, camera, renderer, points;
+            let mouseX = 0, mouseY = 0;
+            let targetRotationX = 0, targetRotationY = 0;
+            let currentRotationX = 0, currentRotationY = 0;
+            // The rainbow colors
+            const colors = [
+                new THREE.Color(0x0000FF), // Blue (Starting color)
+                new THREE.Color(0xFF0000), // Red
+                new THREE.Color(0xFF7F00), // Orange
+                new THREE.Color(0xFFFF00), // Yellow
+                new THREE.Color(0x00FF00), // Green
+                new THREE.Color(0x4B0082), // Indigo
+                new THREE.Color(0x9400D3)  // Violet
+            ];
+            let currentColorIndex = 0;
+            let targetColor = colors[0];
+            let currentColor = colors[0];
+            let colorChangeSpeed = 0.005; // Reduced speed for a softer transition
+            let particleSystem;
+            let clock = new THREE.Clock(); // For time-based color changes
+
+            // --- DOM Elements ---
+            const body = document.body;
+            const startScreen = document.getElementById('start-screen');
+            const surveyScreen = document.getElementById('survey-screen');
+            const completionScreen = document.getElementById('completion-screen');
+            const startButton = document.getElementById('start-button');
+            const restartButton = document.getElementById('restart-button');
+            const timerDisplay = document.getElementById('timer');
+            const progressDisplay = document.getElementById('progress');
+            const progressFill = document.getElementById('progress-fill');
+            const questionContainer = document.getElementById('question-container');
+            const canvas = document.getElementById('campus-canvas');
             
-            return true;
-        }
+            // Student info form elements
+            const studentNameInput = document.getElementById('student-name');
+            const studentYearInput = document.getElementById('student-year');
+            const studentCourseInput = document.getElementById('student-course');
+            
+            // Message box elements
+            const messageBox = document.getElementById('message-box');
+            const messageText = document.getElementById('message-text');
 
-        function renderQuestion() {
-            if (currentQuestionIndex >= surveyData.questions.length) {
-                completeSurvey();
-                return;
-            }
 
-            const questionData = surveyData.questions[currentQuestionIndex];
-            questionContainer.innerHTML = ''; // Clear previous content
-
-            // Update progress display
-            const progressPercent = ((currentQuestionIndex + 1) / surveyData.questions.length) * 100;
-            progressDisplay.textContent = `${currentQuestionIndex + 1}/${surveyData.questions.length}`;
-            progressFill.style.width = `${progressPercent}%`;
-
-            const questionElement = document.createElement('h2');
-            questionElement.className = "text-2xl font-bold text-white mb-6";
-            questionElement.textContent = `Q${currentQuestionIndex + 1}. ${questionData.question}`;
-            questionContainer.appendChild(questionElement);
-
-            const answerSection = document.createElement('div');
-            answerSection.className = "space-y-4";
-
-            if (questionData.type === "multiple-choice") {
-                questionData.options.forEach((option, index) => {
-                    const optionLabel = document.createElement('label');
-                    optionLabel.className = "flex items-center space-x-3 text-lg text-gray-200 p-3 rounded-lg hover:bg-[rgba(255,255,255,0.1)] transition-colors cursor-pointer";
-                    const optionInput = document.createElement('input');
-                    optionInput.type = "radio";
-                    optionInput.name = `question-${currentQuestionIndex}`;
-                    optionInput.value = option;
-                    optionInput.className = "form-radio h-5 w-5 text-[#4169E1] focus:ring-[#4169E1]";
-                    optionLabel.appendChild(optionInput);
-                    optionLabel.appendChild(document.createTextNode(option));
-                    answerSection.appendChild(optionLabel);
+            // --- Three.js Points Visualization ---
+            function initThreeJS() {
+                // Create scene
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x0D2239);
+                
+                // Create camera
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.z = 200;
+                
+                // Create renderer
+                renderer = new THREE.WebGLRenderer({ 
+                    canvas, 
+                    antialias: true, 
+                    alpha: true 
                 });
-            } else if (questionData.type === "short-answer") {
-                const shortAnswerInput = document.createElement('textarea');
-                shortAnswerInput.rows = 3;
-                shortAnswerInput.placeholder = "Enter your response here...";
-                shortAnswerInput.className = "w-full p-4 border border-[rgba(255,255,255,0.3)] bg-[rgba(255,255,255,0.2)] text-white rounded-lg focus:ring-2 focus:ring-[#4169E1] focus:border-transparent transition-all";
-                shortAnswerInput.id = "short-answer-input";
-                answerSection.appendChild(shortAnswerInput);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                
+                // Add lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+                
+                // Create the points system
+                createPointsSystem();
+                
+                // Handle window resize
+                window.addEventListener('resize', onWindowResize);
+
+                // Handle mouse and touch events
+                document.addEventListener('mousemove', onMouseMove, false);
+                document.addEventListener('touchmove', onTouchMove, false);
+                
+                // Start animation
+                animate();
             }
 
-            questionContainer.appendChild(answerSection);
+            function createPointsSystem() {
+                const particleCount = 3000;
+                const positions = new Float32Array(particleCount * 3);
+                const sizes = new Float32Array(particleCount);
+                const originalPositions = new Float32Array(particleCount * 3);
 
-            const navButtons = document.createElement('div');
-            navButtons.className = "mt-6 flex justify-between";
-            
-            if (currentQuestionIndex > 0) {
-                const prevButton = document.createElement('button');
-                prevButton.textContent = "Previous";
-                prevButton.className = "btn-secondary";
-                prevButton.onclick = previousQuestion;
-                navButtons.appendChild(prevButton);
-            } else {
-                // Add empty div for spacing
-                navButtons.appendChild(document.createElement('div'));
+                for (let i = 0; i < particleCount; i++) {
+                    let radius;
+                    // Make 40% of particles closer
+                    if (Math.random() > 0.6) {
+                        radius = 30 + Math.random() * 40; // Closer particles
+                    } else {
+                        radius = 100 + Math.random() * 100; // Farther particles
+                    }
+                    
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.random() * Math.PI;
+                    
+                    const x = radius * Math.sin(phi) * Math.cos(theta);
+                    const y = radius * Math.sin(phi) * Math.sin(theta);
+                    const z = radius * Math.cos(phi);
+                    
+                    positions[i * 3] = x;
+                    positions[i * 3 + 1] = y;
+                    positions[i * 3 + 2] = z;
+                    
+                    originalPositions[i * 3] = x;
+                    originalPositions[i * 3 + 1] = y;
+                    originalPositions[i * 3 + 2] = z;
+                    
+                    // Random size between 2 and 6
+                    sizes[i] = 2 + Math.random() * 4;
+                }
+                
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+                geometry.setAttribute('originalPosition', new THREE.BufferAttribute(originalPositions, 3));
+                
+                // Create a glowing circular texture with a solid inner circle and a more visible glow
+                const textureCanvas = document.createElement('canvas');
+                textureCanvas.width = 128;
+                textureCanvas.height = 128;
+                const context = textureCanvas.getContext('2d');
+                
+                const gradient = context.createRadialGradient(
+                    textureCanvas.width / 2,
+                    textureCanvas.height / 2,
+                    0,
+                    textureCanvas.width / 2,
+                    textureCanvas.height / 2,
+                    textureCanvas.width / 2
+                );
+                
+                // Define the texture stops for the solid inner circle and the more visible glow
+                gradient.addColorStop(0.0, 'rgba(255, 255, 255, 1)'); // Solid white core
+                gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.8)'); // Start the glowing fade
+                gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.2)');
+                gradient.addColorStop(1.0, 'rgba(255, 255, 255, 0)'); // Fully transparent at the edge
+                
+                context.fillStyle = gradient;
+                context.fillRect(0, 0, textureCanvas.width, textureCanvas.height);
+                
+                const particleTexture = new THREE.CanvasTexture(textureCanvas);
+                
+                const material = new THREE.PointsMaterial({
+                    size: 8,
+                    map: particleTexture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    sizeAttenuation: true,
+                    depthWrite: false,
+                    color: currentColor
+                });
+                
+                particleSystem = new THREE.Points(geometry, material);
+                scene.add(particleSystem);
             }
             
-            const nextButton = document.createElement('button');
-            nextButton.textContent = currentQuestionIndex === surveyData.questions.length - 1 ? "Complete Survey" : "Next";
-            nextButton.className = "btn-primary";
-            nextButton.onclick = nextQuestion;
-            navButtons.appendChild(nextButton);
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
 
-            questionContainer.appendChild(navButtons);
-        }
+            // Function to handle mouse movement
+            function onMouseMove(event) {
+                mouseX = (event.clientX - window.innerWidth / 2);
+                mouseY = (event.clientY - window.innerHeight / 2);
+                
+                // Calculate target rotation based on mouse position
+                targetRotationX = -mouseY * 0.0001;
+                targetRotationY = -mouseX * 0.0001;
+            }
 
-        function nextQuestion() {
-            let userAnswer = null;
-            const questionData = surveyData.questions[currentQuestionIndex];
+            // Function to handle touch movement
+            function onTouchMove(event) {
+                if (event.touches.length === 1) {
+                    event.preventDefault();
+                    mouseX = (event.touches[0].pageX - window.innerWidth / 2);
+                    mouseY = (event.touches[0].pageY - window.innerHeight / 2);
+                    
+                    targetRotationX = -mouseY * 0.0001;
+                    targetRotationY = -mouseX * 0.0001;
+                }
+            }
+            
+            let lastColorChangeTime = 0;
+            const colorChangeInterval = 1.0; // Change color every 1 second
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                const elapsedTime = clock.getElapsedTime();
+                
+                // Update target color over time, not based on mouse movement
+                if (elapsedTime - lastColorChangeTime > colorChangeInterval) {
+                    lastColorChangeTime = elapsedTime;
+                    currentColorIndex = (currentColorIndex + 1) % colors.length;
+                    targetColor = colors[currentColorIndex];
+                }
 
-            if (questionData.type === "multiple-choice") {
-                const selectedOption = document.querySelector(`input[name="question-${currentQuestionIndex}"]:checked`);
-                if (selectedOption) {
-                    userAnswer = selectedOption.value;
+                // Smoothly interpolate rotation
+                currentRotationX += (targetRotationX - currentRotationX) * 0.05;
+                currentRotationY += (targetRotationY - currentRotationY) * 0.05;
+                
+                particleSystem.rotation.x = currentRotationX;
+                particleSystem.rotation.y = currentRotationY;
+                
+                // Smoothly interpolate color
+                currentColor.r += (targetColor.r - currentColor.r) * colorChangeSpeed;
+                currentColor.g += (targetColor.g - currentColor.g) * colorChangeSpeed;
+                currentColor.b += (targetColor.b - currentColor.b) * colorChangeSpeed;
+                
+                particleSystem.material.color.copy(currentColor);
+                
+                // Make particles move and respond to mouse
+                const time = Date.now() * 0.001;
+                const positions = particleSystem.geometry.attributes.position.array;
+                const originalPositions = particleSystem.geometry.attributes.originalPosition.array;
+                const sizes = particleSystem.geometry.attributes.size.array;
+                
+                for (let i = 0; i < positions.length; i += 3) {
+                    // Calculate distance from center
+                    const dx = originalPositions[i];
+                    const dy = originalPositions[i + 1];
+                    const dz = originalPositions[i + 2];
+                    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                    
+                    // Make particles move in subtle waves. Increased the time factor for more movement.
+                    // Increased the wave amplitude from 0.8 to 1.5 for more pronounced self-movement
+                    const waveFactor = 0.5 + 0.5 * Math.sin(time * 0.8 + dist * 0.01);
+                    
+                    // Apply mouse influence, but with a smaller multiplier to make the wave movement more dominant
+                    const mouseInfluence = dist < 70 ? 
+                        1.0 * (1 - dist/70) * (mouseX * 0.0001 + mouseY * 0.0001) : 
+                        0;
+                    
+                    positions[i] = originalPositions[i] + 
+                        waveFactor * Math.sin(time * 0.5 + i * 0.01) * 1.5 + 
+                        mouseInfluence * Math.sin(time * 3.0 + i * 0.01);
+                    
+                    positions[i + 1] = originalPositions[i + 1] + 
+                        waveFactor * Math.cos(time * 0.6 + i * 0.01) * 1.5 + 
+                        mouseInfluence * Math.cos(time * 3.0 + i * 0.01);
+                        
+                    positions[i + 2] = originalPositions[i + 2] + 
+                        waveFactor * Math.sin(time * 0.8 + i * 0.01) * 1.5;
+                }
+                
+                particleSystem.geometry.attributes.position.needsUpdate = true;
+                
+                // Make particles pulse with color changes
+                const pulse = 0.9 + 0.1 * Math.sin(time * 2);
+                particleSystem.material.opacity = 0.6 + 0.4 * pulse;
+                
+                renderer.render(scene, camera);
+            }
+
+            // --- Survey Functions ---
+
+            /**
+             * Shows a custom message box instead of using an alert.
+             * @param {string} message The message to display.
+             */
+            const showMessageBox = (message) => {
+                messageText.textContent = message;
+                messageBox.classList.remove('scale-95', 'opacity-0', 'pointer-events-none');
+                messageBox.classList.add('scale-100', 'opacity-100', 'pointer-events-auto');
+            };
+
+            /**
+             * Submits survey data to a Google Sheet via a Google Apps Script.
+             * You MUST replace "YOUR_SCRIPT_URL" with the URL of your deployed script.
+             * @param {object} studentInfo Student information object.
+             * @param {Array} surveyAnswers Array of survey answer objects.
+             */
+            function submitSurvey(studentInfo, surveyAnswers) {
+                // You must replace this URL with your Google Apps Script Web App URL
+                const scriptUrl = "https://script.google.com/macros/s/AKfycbzHGxWH9gUSCfzEtLRgbziyWYuTtSROlvQz075v5R_3kdrbcSrDY7EA1p7cWb9MIP-Sew/exec";
+
+                fetch(scriptUrl, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        name: studentInfo.name,
+                        year: studentInfo.year,
+                        course: studentInfo.course,
+                        answers: surveyAnswers
+                    }),
+                    headers: { "Content-Type": "application/json" }
+                })
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    return res.text(); // Correctly get the response as text
+                })
+                .then(responseText => {
+                    if (responseText.trim() === "Success") {
+                        showMessageBox("Survey submitted successfully!");
+                        console.log("Saved to Google Sheets:", responseText);
+                    } else {
+                        // This will catch any unexpected plain text responses
+                        throw new Error("Unexpected response from server.");
+                    }
+                })
+                .catch(err => {
+                    showMessageBox("Error saving survey. Please try again.");
+                    console.error("Error saving survey:", err);
+                });
+            }
+
+            /**
+             * Validates student information form
+             */
+            const validateStudentInfo = () => {
+                if (!studentNameInput.value.trim()) {
+                    // Replaced alert with a simple console log for a better user experience
+                    showMessageBox("Please enter your name");
+                    studentNameInput.focus();
+                    return false;
+                }
+                
+                if (!studentYearInput.value) {
+                    // Replaced alert with a simple console log for a better user experience
+                    showMessageBox("Please select your year level");
+                    studentYearInput.focus();
+                    return false;
+                }
+                
+                // Save student info
+                studentInfo = {
+                    name: studentNameInput.value.trim(),
+                    year: studentYearInput.value,
+                    course: studentCourseInput.value.trim()
+                };
+                
+                return true;
+            };
+
+            /**
+             * Renders the current question based on its type.
+             */
+            const renderQuestion = () => {
+                if (currentQuestionIndex >= surveyData.questions.length) {
+                    completeSurvey();
+                    return;
+                }
+
+                const questionData = surveyData.questions[currentQuestionIndex];
+                questionContainer.innerHTML = ''; // Clear previous content
+
+                // Update progress display
+                const progressPercent = ((currentQuestionIndex + 1) / surveyData.questions.length) * 100;
+                progressDisplay.textContent = `${currentQuestionIndex + 1}/${surveyData.questions.length}`;
+                progressFill.style.width = `${progressPercent}%`;
+
+                const questionElement = document.createElement('h2');
+                questionElement.className = "text-2xl font-bold text-white mb-6";
+                questionElement.textContent = `Q${currentQuestionIndex + 1}. ${questionData.question}`;
+                questionContainer.appendChild(questionElement);
+
+                const answerSection = document.createElement('div');
+                answerSection.className = "space-y-4";
+
+                if (questionData.type === "multiple-choice") {
+                    questionData.options.forEach((option, index) => {
+                        const optionLabel = document.createElement('label');
+                        optionLabel.className = "flex items-center space-x-3 text-lg text-gray-200 p-3 rounded-lg hover:bg-[rgba(255,255,255,0.1)] transition-colors cursor-pointer";
+                        const optionInput = document.createElement('input');
+                        optionInput.type = "radio";
+                        optionInput.name = `question-${currentQuestionIndex}`;
+                        optionInput.value = option;
+                        optionInput.className = "form-radio h-5 w-5 text-[#4169E1] focus:ring-[#4169E1]";
+                        optionLabel.appendChild(optionInput);
+                        optionLabel.appendChild(document.createTextNode(option));
+                        answerSection.appendChild(optionLabel);
+                    });
+                } else if (questionData.type === "short-answer") {
+                    const shortAnswerInput = document.createElement('textarea');
+                    shortAnswerInput.rows = 3;
+                    shortAnswerInput.placeholder = "Enter your response here...";
+                    shortAnswerInput.className = "w-full p-4 border border-[rgba(255,255,255,0.3)] bg-[rgba(255,255,255,0.2)] text-white rounded-lg focus:ring-2 focus:ring-[#4169E1] focus:border-transparent transition-all";
+                    shortAnswerInput.id = "short-answer-input";
+                    answerSection.appendChild(shortAnswerInput);
+                }
+
+                questionContainer.appendChild(answerSection);
+
+                const navButtons = document.createElement('div');
+                navButtons.className = "mt-6 flex justify-between";
+                
+                if (currentQuestionIndex > 0) {
+                    const prevButton = document.createElement('button');
+                    prevButton.textContent = "Previous";
+                    prevButton.className = "btn-secondary";
+                    prevButton.onclick = previousQuestion;
+                    navButtons.appendChild(prevButton);
                 } else {
-                    showMessageBox("Please select an answer before continuing");
-                    return;
+                    // Add empty div for spacing
+                    navButtons.appendChild(document.createElement('div'));
                 }
-            } else if (questionData.type === "short-answer") {
-                const shortAnswerInput = document.getElementById('short-answer-input');
-                userAnswer = shortAnswerInput.value.trim();
-                if (!userAnswer) {
-                    showMessageBox("Please provide an answer before continuing");
-                    return;
+                
+                const nextButton = document.createElement('button');
+                nextButton.textContent = currentQuestionIndex === surveyData.questions.length - 1 ? "Complete Survey" : "Next";
+                nextButton.className = "btn-primary";
+                nextButton.onclick = nextQuestion;
+                navButtons.appendChild(nextButton);
+
+                questionContainer.appendChild(navButtons);
+            };
+
+            /**
+             * Moves to the next question
+             */
+            const nextQuestion = () => {
+                let userAnswer = null;
+                const questionData = surveyData.questions[currentQuestionIndex];
+
+                if (questionData.type === "multiple-choice") {
+                    const selectedOption = document.querySelector(`input[name="question-${currentQuestionIndex}"]:checked`);
+                    if (selectedOption) {
+                        userAnswer = selectedOption.value;
+                    } else {
+                        // Replaced alert with a simple console log for a better user experience
+                        showMessageBox("Please select an answer before continuing");
+                        return;
+                    }
+                } else if (questionData.type === "short-answer") {
+                    const shortAnswerInput = document.getElementById('short-answer-input');
+                    userAnswer = shortAnswerInput.value.trim();
+                    if (!userAnswer) {
+                        // Replaced alert with a simple console log for a better user experience
+                        showMessageBox("Please provide an answer before continuing");
+                        return;
+                    }
                 }
-            }
 
-            // Save the answer
-            surveyAnswers.push({
-                question: questionData.question,
-                userAnswer: userAnswer
-            });
-            
-            // Move to the next question or finish
-            currentQuestionIndex++;
-            renderQuestion();
-        }
+                // Save the answer
+                surveyAnswers.push({
+                    question: questionData.question,
+                    userAnswer: userAnswer
+                });
+                
+                // Move to the next question or finish
+                currentQuestionIndex++;
+                renderQuestion();
+            };
 
-        function previousQuestion() {
-            // Remove the last answer
-            if (surveyAnswers.length > 0) {
-                surveyAnswers.pop();
-            }
-            
-            // Move to the previous question
-            currentQuestionIndex--;
-            renderQuestion();
-        }
+            /**
+             * Moves to the previous question
+             */
+            const previousQuestion = () => {
+                // Remove the last answer
+                if (surveyAnswers.length > 0) {
+                    surveyAnswers.pop();
+                }
+                
+                // Move to the previous question
+                currentQuestionIndex--;
+                renderQuestion();
+            };
 
-        function updateTimer() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            
-            if (timeLeft <= 0) {
+            /**
+             * Updates the timer display.
+             */
+            const updateTimer = () => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    completeSurvey();
+                } else {
+                    timeLeft--;
+                }
+            };
+
+            /**
+             * Completes the survey and shows the completion screen.
+             */
+            const completeSurvey = () => {
+                // Stop the timer
                 clearInterval(timerInterval);
-                completeSurvey();
-            } else {
-                timeLeft--;
-            }
-        }
+                
+                // Hide survey screen and show completion screen
+                surveyScreen.classList.add('hidden');
+                completionScreen.classList.remove('hidden');
 
-        function completeSurvey() {
-            // Stop the timer
-            clearInterval(timerInterval);
-            
-            // Hide survey screen and show completion screen
-            surveyScreen.classList.add('hidden');
-            completionScreen.classList.remove('hidden');
-            
-            // Submit the survey data
-            submitSurvey(studentInfo, surveyAnswers);
-        }
+                // Exit full screen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+                
+                // In a real implementation, you would save the data here
+                submitSurvey(studentInfo, surveyAnswers);
+            };
 
-        // --- Event Listeners for Survey Logic ---
-        startButton.addEventListener('click', () => {
-            // Validate student info
-            if (!validateStudentInfo()) {
-                return;
-            }
-            
-            // Hide start screen and show survey screen
-            startScreen.classList.add('hidden');
-            surveyScreen.classList.remove('hidden');
-            
-            // Start the timer
-            updateTimer();
-            timerInterval = setInterval(updateTimer, 1000);
+            // --- Event Listeners for Survey Logic ---
+            startButton.addEventListener('click', () => {
+                // Validate student info
+                if (!validateStudentInfo()) {
+                    return;
+                }
 
-            // Display the first question
-            renderQuestion();
-        });
+                // Request full-screen mode for the entire document
+                try {
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen();
+                    }
+                } catch (e) {
+                    console.error("Failed to enter full-screen mode:", e);
+                }
+                
+                // Hide start screen and show survey screen
+                startScreen.classList.add('hidden');
+                surveyScreen.classList.remove('hidden');
+                
+                // Start the timer
+                updateTimer();
+                timerInterval = setInterval(updateTimer, 1000);
 
-        restartButton.addEventListener('click', () => {
-            // Reset state
-            currentQuestionIndex = 0;
-            surveyAnswers = [];
-            timeLeft = 300;
-            
-            // Hide completion screen and show start screen
-            completionScreen.classList.add('hidden');
-            startScreen.classList.remove('hidden');
-            
-            // Reset form
-            studentNameInput.value = "";
-            studentYearInput.value = "";
-            studentCourseInput.value = "";
-        });
+                // Display the first question
+                renderQuestion();
+            });
 
-        // Initialize the page
-        createParticles();
+            restartButton.addEventListener('click', () => {
+                // Reset state
+                currentQuestionIndex = 0;
+                surveyAnswers = [];
+                timeLeft = 300;
+                
+                // Hide completion screen and show start screen
+                completionScreen.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+                
+                // Reset form
+                studentNameInput.value = "";
+                studentYearInput.value = "";
+                studentCourseInput.value = "";
+            });
+
+            // --- Anti-Cheating Event Listeners ---
+            
+            // Disable right-click
+            document.addEventListener('contextmenu', e => e.preventDefault());
+
+            // Block restricted keys
+            document.addEventListener('keydown', e => {
+                if (
+                    e.key === 'F5' ||
+                    (e.ctrlKey && e.key === 'r') ||
+                    e.key === 'F12' ||
+                    (e.ctrlKey && e.shiftKey && (e.key === 'i' || e.key === 'j')) ||
+                    (e.ctrlKey && e.key === 'u') ||
+                    (e.ctrlKey && e.key === 'c') ||
+                    (e.ctrlKey && e.key === 'v') ||
+                    (e.ctrlKey && e.key === 'x') ||
+                    (e.ctrlKey && e.key === 'a') ||
+                    (e.ctrlKey && e.key === 's')
+                ) {
+                    e.preventDefault();
+                    console.warn(`Blocked restricted key: ${e.key}`);
+                }
+            });
+
+            // Initialize Three.js scene
+            initThreeJS();
+
+        })();
     </script>
 </body>
 </html>
