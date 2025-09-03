@@ -3,407 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEC Survey</title>
+    <title>CEC Campus Navigation - Interactive Survey</title>
+    <!-- Use Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Three.js for 3D graphics -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    
-        // Global Variables
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-    
-        let db, auth, userId;
-        let isAuthReady = false;
-        
-        let surveyData = null;
-        let currentQuestionIndex = 0;
-        let userAnswers = {};
-        let violationsCount = 0;
-        let surveyDuration = 300; // 5 minutes in seconds
-        let timer = null;
-        let isSurveyActive = false;
-        let violationTimer = null;
-        let violationCooldown = 8;
-    
-        // References to UI elements
-        const startBtn = document.getElementById('startBtn');
-        const surveyContainer = document.getElementById('survey-container');
-        const questionContainer = document.getElementById('question-container');
-        const resultModal = document.getElementById('resultModal');
-        const confirmModal = document.getElementById('confirmModal');
-        const violationModal = document.getElementById('violationModal');
-        const studentFormModal = document.getElementById('studentFormModal');
-        const statusEl = document.getElementById('status');
-        const userIdEl = document.getElementById('userIdDisplay');
-    
-        // Utility Functions
-        const shuffleArray = array => {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        };
-    
-        const showModal = (modal) => modal.classList.add('flex');
-        const hideModal = (modal) => modal.classList.remove('flex');
-    
-        const saveUserDataToFirestore = async (data) => {
-            const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'surveyResponses', userId);
-            try {
-                await setDoc(userDocRef, data, { merge: true });
-                console.log("Document successfully written!");
-            } catch (error) {
-                console.error("Error writing document: ", error);
-            }
-        };
-    
-        const loadSurveyData = async () => {
-            try {
-                const response = await fetch('survey-data.json');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                surveyData = data.questions;
-            } catch (error) {
-                console.error("Failed to load survey data:", error);
-                statusEl.textContent = 'Failed to load survey questions. Please refresh the page.';
-                startBtn.disabled = true;
-            }
-        };
-    
-        // Core Logic
-        const initFirebase = async () => {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-    
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-    
-                userId = auth.currentUser.uid;
-                userIdEl.textContent = `User ID: ${userId}`;
-                isAuthReady = true;
-                
-                // Check if user has already completed the survey
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'surveyResponses', userId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists() && docSnap.data().status === 'completed') {
-                    startBtn.textContent = 'Survey Completed';
-                    startBtn.disabled = true;
-                    statusEl.textContent = 'You have already completed this survey. You can retry after 60 seconds.';
-                    setTimeout(() => {
-                        startBtn.textContent = 'Start Survey';
-                        startBtn.disabled = false;
-                        statusEl.textContent = '';
-                    }, 60000);
-                } else {
-                    startBtn.disabled = false;
-                }
-            } catch (error) {
-                console.error("Error initializing Firebase:", error);
-                startBtn.textContent = 'Firebase Error';
-                startBtn.disabled = true;
-            }
-        };
-    
-        const handleViolation = () => {
-            if (!isSurveyActive) return;
-            violationsCount++;
-            document.exitFullscreen();
-            clearInterval(timer);
-            hideModal(confirmModal);
-            showModal(violationModal);
-            const violationMessage = document.getElementById('violationMessage');
-            violationMessage.textContent = `Violation detected! This is your violation #${violationsCount}. Remaining time: ${violationCooldown}s`;
-            let countdown = violationCooldown;
-            violationTimer = setInterval(() => {
-                countdown--;
-                violationMessage.textContent = `Violation detected! This is your violation #${violationsCount}. Remaining time: ${countdown}s`;
-                if (countdown <= 0) {
-                    clearInterval(violationTimer);
-                    hideModal(violationModal);
-                    requestFullscreen();
-                    startTimer();
-                }
-            }, 1000);
-        };
-    
-        const requestFullscreen = () => {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) elem.requestFullscreen();
-            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-            else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
-        };
-    
-        const startTimer = () => {
-            if (timer) clearInterval(timer);
-            const timerDisplay = document.getElementById('timerDisplay');
-            timer = setInterval(() => {
-                surveyDuration--;
-                const minutes = Math.floor(surveyDuration / 60);
-                const seconds = surveyDuration % 60;
-                timerDisplay.textContent = `Time Left: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                if (surveyDuration <= 0) {
-                    clearInterval(timer);
-                    finishSurvey();
-                }
-            }, 1000);
-        };
-    
-        const finishSurvey = async () => {
-            isSurveyActive = false;
-            clearInterval(timer);
-            document.exitFullscreen();
-            
-            // Save final data to Firestore
-            const finalData = {
-                status: 'completed',
-                timestamp: new Date().toISOString(),
-                violations: violationsCount,
-                studentData: {
-                    name: document.getElementById('studentName').value,
-                    year: document.getElementById('studentYear').value,
-                    section: document.getElementById('studentSection').value,
-                    course: document.getElementById('studentCourse').value
-                },
-                answers: userAnswers
-            };
-            await saveUserDataToFirestore(finalData);
-            
-            questionContainer.innerHTML = '';
-            showModal(resultModal);
-    
-            const resultsSummary = document.getElementById('resultsSummary');
-            resultsSummary.innerHTML = `
-                <h3 class="text-xl font-semibold mb-2">Survey Submitted Successfully!</h3>
-                <p>Thank you for your participation.</p>
-                <p>Your responses have been saved.</p>
-                <p>Your User ID is: <span class="font-bold">${userId}</span></p>
-                <p class="mt-4 text-sm text-gray-400">Please note this survey does not have a scoring system. All your responses have been recorded.</p>
-            `;
-            
-            // Reset state for retry
-            startBtn.textContent = 'Start Survey';
-            startBtn.disabled = false;
-            
-            setTimeout(() => hideModal(resultModal), 60000); // Hide after 60s
-        };
-    
-        const renderQuestion = (index) => {
-            if (index >= surveyData.length) {
-                finishSurvey();
-                return;
-            }
-            currentQuestionIndex = index;
-            const question = surveyData[index];
-            questionContainer.innerHTML = `
-                <div class="glass-card p-8 shadow-2xl transition-all transform hover:scale-[1.01] duration-300">
-                    <p class="text-white text-lg mb-4">${index + 1}. ${question.question}</p>
-                    <input type="text" id="ansInput" placeholder="Type your answer here..." class="w-full p-3 rounded-lg bg-white/30 text-white placeholder-gray-200 border border-white/20 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50 transition duration-200">
-                    <button id="submitBtn" class="mt-4 w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 transition duration-200 shadow-md">Submit Answer</button>
-                </div>
-            `;
-    
-            const ansInput = document.getElementById('ansInput');
-            const submitBtn = document.getElementById('submitBtn');
-    
-            submitBtn.addEventListener('click', () => showConfirmModal());
-    
-            ansInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (!confirmModal.classList.contains('flex')) {
-                        showConfirmModal();
-                    }
-                }
-            });
-            ansInput.focus();
-        };
-    
-        const showConfirmModal = () => {
-            hideModal(violationModal);
-            showModal(confirmModal);
-            const ansInput = document.getElementById('ansInput');
-            
-            const handleKeys = (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    document.getElementById('confirmYes').click();
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    document.getElementById('confirmNo').click();
-                }
-            };
-    
-            document.addEventListener('keydown', handleKeys, { once: true, capture: true });
-        };
-    
-        const processAnswer = async () => {
-            const ansInput = document.getElementById('ansInput');
-            const answer = ansInput.value.trim();
-            userAnswers[currentQuestionIndex] = {
-                question: surveyData[currentQuestionIndex].question,
-                answer: answer
-            };
-            await saveUserDataToFirestore({ [`answers.${currentQuestionIndex}`]: { question: surveyData[currentQuestionIndex].question, answer: answer }});
-            renderQuestion(currentQuestionIndex + 1);
-        };
-    
-        // Document-level event listeners for security and control
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r') || (e.ctrlKey && e.shiftKey && e.key === 'i') || e.key === 'F12' || (e.ctrlKey && e.key === 's') || (e.ctrlKey && e.key === 'u')) {
-                e.preventDefault();
-            }
-            if ((e.ctrlKey && e.key === 'c') || (e.ctrlKey && e.key === 'v') || (e.ctrlKey && e.key === 'x') || (e.ctrlKey && e.key === 'a')) {
-                if (isSurveyActive) e.preventDefault();
-            }
-        });
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) handleViolation();
-        });
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement && isSurveyActive) handleViolation();
-        });
-        document.addEventListener('webkitfullscreenchange', () => {
-            if (!document.webkitFullscreenElement && isSurveyActive) handleViolation();
-        });
-        document.addEventListener('msfullscreenchange', () => {
-            if (!document.msFullscreenElement && isSurveyActive) handleViolation();
-        });
-        
-        // Initial state and event listeners
-        document.addEventListener('DOMContentLoaded', async () => {
-            startBtn.disabled = true; // Disabled until Firebase is ready
-            await loadSurveyData();
-            initFirebase();
-            showModal(studentFormModal);
-    
-            document.getElementById('startFormBtn').addEventListener('click', () => {
-                if (document.getElementById('studentName').value && document.getElementById('studentYear').value) {
-                    hideModal(studentFormModal);
-                    surveyContainer.classList.remove('hidden');
-                    startBtn.style.display = 'block';
-                } else {
-                    // Replaced alert with a custom message to avoid modal issues
-                    const statusText = document.createElement('p');
-                    statusText.textContent = 'Please fill in your name and year.';
-                    statusText.className = 'text-red-500 mt-4';
-                    document.getElementById('studentFormModal').querySelector('.modal').appendChild(statusText);
-                    setTimeout(() => statusText.remove(), 3000);
-                }
-            });
-    
-            startBtn.addEventListener('click', () => {
-                hideModal(resultModal);
-                startBtn.style.display = 'none';
-                isSurveyActive = true;
-                requestFullscreen();
-                startTimer();
-                renderQuestion(0);
-            });
-    
-            document.getElementById('confirmYes').addEventListener('click', () => {
-                hideModal(confirmModal);
-                processAnswer();
-            });
-            document.getElementById('confirmNo').addEventListener('click', () => {
-                hideModal(confirmModal);
-            });
-            document.getElementById('continueBtn').addEventListener('click', () => {
-                clearInterval(violationTimer);
-                hideModal(violationModal);
-                requestFullscreen();
-                startTimer();
-            });
-            document.getElementById('exitBtn').addEventListener('click', () => {
-                clearInterval(violationTimer);
-                finishSurvey();
-            });
-        });
-    
-        // 3D Background with Three.js
-        const initThreeJS = () => {
-            const container = document.getElementById('threejs-bg');
-            let SCREEN_WIDTH = window.innerWidth;
-            let SCREEN_HEIGHT = window.innerHeight;
-            let aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
-    
-            let camera, scene, renderer, particles;
-    
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(50, aspect, 1, 3000);
-            camera.position.z = 1000;
-            scene.add(camera);
-    
-            const geometry = new THREE.BufferGeometry();
-            const vertices = [];
-            for (let i = 0; i < 10000; i++) {
-                vertices.push(THREE.MathUtils.randFloatSpread(2000));
-                vertices.push(THREE.MathUtils.randFloatSpread(2000));
-                vertices.push(THREE.MathUtils.randFloatSpread(2000));
-            }
-            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    
-            particles = new THREE.Points(geometry, new THREE.PointsMaterial({
-                color: 0x888888,
-                size: 2
-            }));
-            scene.add(particles);
-    
-            const material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.1 });
-            const sphereGeometry = new THREE.SphereGeometry(200, 32, 32);
-            const sphere = new THREE.Mesh(sphereGeometry, material);
-            scene.add(sphere);
-    
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-            renderer.setClearColor(0x000000, 1);
-            container.appendChild(renderer.domElement);
-    
-            const animate = () => {
-                requestAnimationFrame(animate);
-                const r = Date.now() * 0.0001;
-                particles.rotation.y = r;
-                sphere.rotation.y = -r * 0.5;
-                sphere.rotation.x = r * 0.2;
-                renderer.render(scene, camera);
-            };
-    
-            const onWindowResize = () => {
-                SCREEN_WIDTH = window.innerWidth;
-                SCREEN_HEIGHT = window.innerHeight;
-                aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
-                renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-                camera.aspect = aspect;
-                camera.updateProjectionMatrix();
-            };
-    
-            window.addEventListener('resize', onWindowResize);
-            animate();
-        };
-        initThreeJS();
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Custom styles for the survey interface */
         body {
             font-family: 'Inter', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            background-color: #000;
+            background: linear-gradient(135deg, #0D2239 0%, #1A2E47 100%);
+            color: #E5E5E5;
+            transition: all 0.3s ease-in-out;
+            overflow-x: hidden;
         }
-        #threejs-bg {
+
+        .cec-title {
+            font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 2px;
+            color: #D4AF37;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .card {
+            background: rgba(26, 46, 71, 0.9);
+            border: 2px solid #D4AF37;
+            transition: all 0.3s ease-in-out;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 36px rgba(212, 175, 55, 0.3);
+        }
+
+        /* 3D Canvas */
+        #campus-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -411,129 +51,712 @@
             height: 100%;
             z-index: -1;
         }
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
+
+        /* Form styling */
+        .form-input {
+            background: rgba(13, 34, 57, 0.7);
+            border: 1px solid #2C4369;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
             width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
         }
-        /* New and updated glassmorphism styles */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.17);
-            backdrop-filter: blur(17px);
-            -webkit-backdrop-filter: blur(17px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5),
-                inset 0 -1px 0 rgba(255, 255, 255, 0.1),
-                inset 0 0 0px 0px rgba(255, 255, 255, 0);
-            position: relative;
+
+        .form-input:focus {
+            outline: none;
+            border-color: #D4AF37;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.3);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #E5E5E5;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #D4AF37 0%, #BF9520 100%);
+            color: #0D2239;
+            font-weight: bold;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-weight: bold;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
             overflow: hidden;
         }
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.8),
-                transparent
-            );
-        }
-        .glass-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 1px;
+
+        .progress-fill {
             height: 100%;
-            background: linear-gradient(
-                180deg,
-                rgba(255, 255, 255, 0.8),
-                transparent,
-                rgba(255, 255, 255, 0.3)
-            );
+            background: linear-gradient(90deg, #D4AF37 0%, #FFD700 100%);
+            border-radius: 4px;
+            transition: width 0.5s ease-in-out;
         }
-        .text-glow {
-            text-shadow: 0 0 8px rgba(0,255,0,0.5), 0 0 16px rgba(0,255,0,0.3);
+
+        /* Question animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-container {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .card {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+            
+            .cec-title {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Floating elements */
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
         }
     </style>
 </head>
-<body class="bg-black text-white font-sans overflow-hidden">
-    <!-- Three.js Background Canvas -->
-    <div id="threejs-bg"></div>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <!-- 3D Campus Canvas -->
+    <canvas id="campus-canvas"></canvas>
 
-    <!-- Main UI Container -->
-    <div class="relative w-full h-screen flex flex-col justify-center items-center p-4">
-        <div id="userIdDisplay" class="absolute top-4 right-4 text-xs text-gray-400"></div>
-
-        <!-- Student Form Modal -->
-        <div id="studentFormModal" class="modal-overlay">
-            <div class="modal glass-card w-full max-w-lg">
-                <h2 class="text-3xl font-bold mb-4 text-green-400 text-glow">Cebu Eastern College Survey</h2>
-                <p class="text-gray-300 mb-6">Please enter your student details to begin.</p>
-                <div class="flex flex-col space-y-4 mb-6">
-                    <input type="text" id="studentName" placeholder="Full Name" class="p-3 rounded-lg bg-white/30 text-white placeholder-gray-200 border border-white/20 focus:outline-none focus:ring-2 focus:ring-green-400">
-                    <input type="text" id="studentYear" placeholder="Year" class="p-3 rounded-lg bg-white/30 text-white placeholder-gray-200 border border-white/20 focus:outline-none focus:ring-2 focus:ring-green-400">
-                    <input type="text" id="studentSection" placeholder="Section" class="p-3 rounded-lg bg-white/30 text-white placeholder-gray-200 border border-white/20 focus:outline-none focus:ring-2 focus:ring-green-400">
-                    <input type="text" id="studentCourse" placeholder="Course" class="p-3 rounded-lg bg-white/30 text-white placeholder-gray-200 border border-white/20 focus:outline-none focus:ring-2 focus:ring-green-400">
-                </div>
-                <button id="startFormBtn" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 transition duration-200">Start Survey</button>
+    <!-- Start Screen -->
+    <div id="start-screen" class="card p-8 rounded-2xl w-full max-w-2xl text-center floating">
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#BF9520] flex items-center justify-center shadow-lg">
+            <span class="text-2xl font-bold text-[#0D2239]">CEC</span>
+        </div>
+        <h1 class="text-5xl md:text-6xl font-extrabold text-white mb-4 cec-title">Campus Navigation System</h1>
+        <p class="text-lg text-gray-300 mb-8">Help us improve campus navigation by completing this survey</p>
+        
+        <!-- Student Information Form -->
+        <div id="student-info-form" class="text-left p-6 rounded-xl mb-6 bg-gradient-to-br from-[#0D2239] to-[#1A2E47]">
+            <h2 class="text-xl font-bold text-white mb-4">Student Information:</h2>
+            
+            <div class="mb-4">
+                <label class="form-label" for="student-name">Full Name</label>
+                <input type="text" id="student-name" class="form-input" placeholder="Enter your name" required>
             </div>
-        </div>
-
-        <!-- Survey Container -->
-        <div id="survey-container" class="hidden flex flex-col items-center w-full max-w-2xl px-4 text-center">
-            <h1 class="text-3xl font-bold mb-4 text-green-400 text-glow">CEC Navigation Survey</h1>
-            <p id="timerDisplay" class="text-lg font-bold text-red-500 text-shadow-lg mb-8"></p>
-            <div id="question-container" class="w-full"></div>
-            <button id="startBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg mt-8 transition-all transform hover:scale-105 shadow-lg">Start Survey</button>
-            <p id="status" class="mt-4 text-gray-300"></p>
-        </div>
-
-        <!-- Confirmation Modal -->
-        <div id="confirmModal" class="modal-overlay">
-            <div class="modal glass-card">
-                <h3 class="text-xl font-semibold mb-4">Confirm Submission?</h3>
-                <p class="text-gray-300 mb-6">Are you sure you want to submit this answer? You cannot change it later.</p>
-                <div class="flex space-x-4">
-                    <button id="confirmYes" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition duration-200">Yes</button>
-                    <button id="confirmNo" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-lg transition duration-200">No</button>
-                </div>
+            
+            <div class="mb-4">
+                <label class="form-label" for="student-year">Year Level</label>
+                <select id="student-year" class="form-input" required>
+                    <option value="">Select your year level</option>
+                    <option value="Grade 7">Grade 7</option>
+                    <option value="Grade 8">Grade 8</option>
+                    <option value="Grade 9">Grade 9</option>
+                    <option value="Grade 10">Grade 10</option>
+                    <option value="Grade 11">Grade 11</option>
+                    <option value="Grade 12">Grade 12</option>
+                    <option value="College">College</option>
+                    <option value="Faculty">Faculty/Staff</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label" for="student-course">Course/Program (if applicable)</label>
+                <input type="text" id="student-course" class="form-input" placeholder="e.g., BS Computer Science">
             </div>
         </div>
         
-        <!-- Violation Modal -->
-        <div id="violationModal" class="modal-overlay">
-            <div class="modal glass-card">
-                <h3 class="text-xl font-semibold text-red-500 mb-4">Exam Violation!</h3>
-                <p id="violationMessage" class="text-gray-300 mb-6"></p>
-                <div class="flex space-x-4">
-                    <button id="continueBtn" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition duration-200">Continue</button>
-                    <button id="exitBtn" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-lg transition duration-200">Exit Exam</button>
-                </div>
+        <div class="text-left p-6 rounded-xl mb-8 bg-gradient-to-br from-[#0D2239] to-[#1A2E47]">
+            <h2 class="text-xl font-bold text-white mb-2">Survey Guidelines:</h2>
+            <ul class="list-disc list-inside text-gray-300 space-y-2">
+                <li>This survey will take approximately 5-7 minutes to complete.</li>
+                <li>Your responses will help improve campus navigation for everyone.</li>
+                <li>All responses are anonymous and will be used for academic purposes only.</li>
+                <li>Please answer all questions honestly and to the best of your ability.</li>
+            </ul>
+        </div>
+        <button id="start-button" class="btn-primary w-full">
+            Begin Survey
+        </button>
+    </div>
+
+    <!-- Survey Screen -->
+    <div id="survey-screen" class="hidden w-full max-w-2xl flex flex-col items-center">
+        <!-- Header with Progress and Timer -->
+        <div class="card rounded-2xl p-6 mb-6 w-full flex justify-between items-center">
+            <div class="text-lg font-semibold text-white">Progress: <span id="progress" class="text-[#D4AF37] font-bold">1/15</span></div>
+            <div class="text-lg font-semibold text-white">Time: <span id="timer" class="text-[#D4AF37] font-bold">05:00</span></div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full mb-6">
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill" style="width: 6.66%"></div>
             </div>
         </div>
-        
-        <!-- Result Modal -->
-        <div id="resultModal" class="modal-overlay">
-            <div class="modal glass-card">
-                <div id="resultsSummary"></div>
-            </div>
+
+        <!-- Question Container -->
+        <div id="question-container" class="card rounded-2xl p-8 w-full question-container">
+            <!-- Question content will be rendered here by JavaScript -->
         </div>
     </div>
+
+    <!-- Completion Screen -->
+    <div id="completion-screen" class="hidden card p-8 rounded-2xl w-full max-w-2xl text-center floating">
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#BF9520] flex items-center justify-center shadow-lg">
+            <span class="text-2xl font-bold text-[#0D2239]">CEC</span>
+        </div>
+        <h2 class="text-4xl font-extrabold text-white mb-4 cec-title">Survey Complete!</h2>
+        <p class="text-lg text-gray-300 mb-6">Thank you for participating in our survey.</p>
+        <div class="mb-6 p-6 rounded-xl bg-gradient-to-br from-[#0D2239] to-[#1A2E47]">
+            <p class="text-white mb-4">Your feedback will help us create a better campus navigation system for Cebu Eastern College.</p>
+            <p class="text-gray-300 text-sm">The navigation system will include:</p>
+            <ul class="list-disc list-inside text-gray-300 text-sm mt-2 space-y-1">
+                <li>Faculty information directory</li>
+                <li>Interactive room navigation</li>
+                <li>Emergency exit guidance</li>
+                <li>Event creation and location setting</li>
+            </ul>
+        </div>
+        <button id="restart-button" class="btn-primary w-full">
+            Return to Start
+        </button>
+    </div>
+
+    <!-- Script Block -->
+    <script>
+        // Use an IIFE (Immediately Invoked Function Expression) to avoid polluting the global scope
+        (function() {
+            // --- Survey Data ---
+            const surveyData = {
+                questions: [
+                    {
+                        type: "multiple-choice",
+                        question: "How often do you have difficulty finding classrooms or offices on campus?",
+                        options: ["Very Often", "Often", "Sometimes", "Rarely", "Never"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Which feature would be most valuable in a campus navigation app?",
+                        options: ["Room Navigation", "Faculty Directory", "Emergency Exits", "Event Locations", "All of the above"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How do you currently find your way around campus?",
+                        options: ["Ask someone for directions", "Use printed maps", "Trial and error", "I already know my way", "Other"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Have you ever been late to class because you couldn't find the room?",
+                        options: ["Yes, frequently", "Yes, occasionally", "No, never"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How important is an emergency exit guide in a campus navigation system?",
+                        options: ["Extremely Important", "Very Important", "Somewhat Important", "Not Important"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Would you use a feature that shows real-time event locations on campus?",
+                        options: ["Definitely", "Probably", "Maybe", "Probably Not", "Definitely Not"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How often do you need to find a faculty member's office?",
+                        options: ["Daily", "Weekly", "Monthly", "Rarely", "Never"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Which device would you most likely use for campus navigation?",
+                        options: ["Smartphone", "Tablet", "Laptop", "Desktop Computer", "Information Kiosk"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How satisfied are you with the current signage and wayfinding on campus?",
+                        options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"],
+                    },
+                    {
+                        type: "short-answer",
+                        question: "What specific location on campus do you find most difficult to navigate?",
+                    },
+                    {
+                        type: "short-answer",
+                        question: "What additional features would you like to see in a campus navigation app?",
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How likely are you to use a campus navigation system if it were available?",
+                        options: ["Extremely Likely", "Very Likely", "Somewhat Likely", "Not Likely"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Which operating system do you primarily use on your mobile device?",
+                        options: ["Android", "iOS", "I don't use a mobile device", "Other"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How would you prefer to access the campus navigation system?",
+                        options: ["Mobile App", "Web Browser", "Both", "Information Kiosks"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Would you be interested in a feature that allows students to create study group meetings with specific locations?",
+                        options: ["Yes, definitely", "Maybe", "No, not interested"],
+                    }
+                ]
+            };
+
+            // Global state variables
+            let currentQuestionIndex = 0;
+            let surveyAnswers = [];
+            let timerInterval;
+            let timeLeft = 300; // 5 minutes in seconds
+            let studentInfo = {
+                name: "",
+                year: "",
+                course: ""
+            };
+
+            // Three.js variables
+            let scene, camera, renderer, controls;
+            let campusBuildings = [];
+
+            // --- DOM Elements ---
+            const body = document.body;
+            const startScreen = document.getElementById('start-screen');
+            const surveyScreen = document.getElementById('survey-screen');
+            const completionScreen = document.getElementById('completion-screen');
+            const startButton = document.getElementById('start-button');
+            const restartButton = document.getElementById('restart-button');
+            const timerDisplay = document.getElementById('timer');
+            const progressDisplay = document.getElementById('progress');
+            const progressFill = document.getElementById('progress-fill');
+            const questionContainer = document.getElementById('question-container');
+            const canvas = document.getElementById('campus-canvas');
+            
+            // Student info form elements
+            const studentNameInput = document.getElementById('student-name');
+            const studentYearInput = document.getElementById('student-year');
+            const studentCourseInput = document.getElementById('student-course');
+
+            // --- Three.js Campus Visualization ---
+            function initThreeJS() {
+                // Create scene
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x0D2239);
+                
+                // Create camera
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.set(0, 5, 10);
+                
+                // Create renderer
+                renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                
+                // Add lights
+                const ambientLight = new THREE.AmbientLight(0x404040);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xD4AF37, 0.8);
+                directionalLight.position.set(5, 10, 7);
+                scene.add(directionalLight);
+                
+                const hemisphereLight = new THREE.HemisphereLight(0x1A2E47, 0x0D2239, 0.6);
+                scene.add(hemisphereLight);
+                
+                // Create campus ground
+                const groundGeometry = new THREE.PlaneGeometry(30, 30);
+                const groundMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x1A2E47,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.position.y = -0.5;
+                scene.add(ground);
+                
+                // Add grid helper
+                const gridHelper = new THREE.GridHelper(30, 30, 0x2C4369, 0x2C4369);
+                gridHelper.position.y = -0.49;
+                scene.add(gridHelper);
+                
+                // Create campus buildings
+                createCampusBuildings();
+                
+                // Add orbit controls
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                controls.minDistance = 5;
+                controls.maxDistance = 20;
+                
+                // Handle window resize
+                window.addEventListener('resize', onWindowResize);
+                
+                // Start animation
+                animate();
+            }
+            
+            function createCampusBuildings() {
+                // Main building
+                const mainBuilding = createBuilding(4, 3, 8, 0xD4AF37);
+                mainBuilding.position.set(0, 1.5, 0);
+                scene.add(mainBuilding);
+                campusBuildings.push(mainBuilding);
+                
+                // Library
+                const library = createBuilding(3, 2, 6, 0x2C4369);
+                library.position.set(-6, 1, 5);
+                scene.add(library);
+                campusBuildings.push(library);
+                
+                // Science building
+                const scienceBuilding = createBuilding(3, 2.5, 5, 0x1A2E47);
+                scienceBuilding.position.set(6, 1.25, 5);
+                scene.add(scienceBuilding);
+                campusBuildings.push(scienceBuilding);
+                
+                // Dormitory
+                const dormitory = createBuilding(5, 2, 4, 0x0D2239);
+                dormitory.position.set(-5, 1, -5);
+                scene.add(dormitory);
+                campusBuildings.push(dormitory);
+                
+                // Gymnasium
+                const gym = createBuilding(6, 2, 4, 0x2C4369);
+                gym.position.set(5, 1, -5);
+                scene.add(gym);
+                campusBuildings.push(gym);
+            }
+            
+            function createBuilding(width, height, depth, color) {
+                const geometry = new THREE.BoxGeometry(width, height, depth);
+                const material = new THREE.MeshStandardMaterial({ 
+                    color,
+                    roughness: 0.7,
+                    metalness: 0.3
+                });
+                const building = new THREE.Mesh(geometry, material);
+                
+                // Add windows
+                const windowMaterial = new THREE.MeshBasicMaterial({ color: 0xADD8E6 });
+                for (let i = 0; i < 4; i++) {
+                    const windowGeometry = new THREE.PlaneGeometry(0.5, 0.5);
+                    const window = new THREE.Mesh(windowGeometry, windowMaterial);
+                    
+                    if (i === 0) window.position.set(width/2 + 0.01, 0, 0);
+                    else if (i === 1) window.position.set(-width/2 - 0.01, 0, 0);
+                    else if (i === 2) window.position.set(0, 0, depth/2 + 0.01);
+                    else window.position.set(0, 0, -depth/2 - 0.01);
+                    
+                    window.rotation.y = i * Math.PI / 2;
+                    building.add(window);
+                }
+                
+                return building;
+            }
+            
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Animate buildings slightly
+                const time = Date.now() * 0.001;
+                campusBuildings.forEach((building, index) => {
+                    building.position.y = Math.sin(time + index * 0.5) * 0.05 + building.position.y;
+                    building.rotation.y = Math.sin(time * 0.5 + index) * 0.01;
+                });
+                
+                controls.update();
+                renderer.render(scene, camera);
+            }
+
+            // --- Survey Functions ---
+
+            /**
+             * Validates student information form
+             */
+            const validateStudentInfo = () => {
+                if (!studentNameInput.value.trim()) {
+                    alert("Please enter your name");
+                    studentNameInput.focus();
+                    return false;
+                }
+                
+                if (!studentYearInput.value) {
+                    alert("Please select your year level");
+                    studentYearInput.focus();
+                    return false;
+                }
+                
+                // Save student info
+                studentInfo = {
+                    name: studentNameInput.value.trim(),
+                    year: studentYearInput.value,
+                    course: studentCourseInput.value.trim()
+                };
+                
+                return true;
+            };
+
+            /**
+             * Renders the current question based on its type.
+             */
+            const renderQuestion = () => {
+                if (currentQuestionIndex >= surveyData.questions.length) {
+                    completeSurvey();
+                    return;
+                }
+
+                const questionData = surveyData.questions[currentQuestionIndex];
+                questionContainer.innerHTML = ''; // Clear previous content
+
+                // Update progress display
+                const progressPercent = ((currentQuestionIndex + 1) / surveyData.questions.length) * 100;
+                progressDisplay.textContent = `${currentQuestionIndex + 1}/${surveyData.questions.length}`;
+                progressFill.style.width = `${progressPercent}%`;
+
+                const questionElement = document.createElement('h2');
+                questionElement.className = "text-2xl font-bold text-white mb-6";
+                questionElement.textContent = `Q${currentQuestionIndex + 1}. ${questionData.question}`;
+                questionContainer.appendChild(questionElement);
+
+                const answerSection = document.createElement('div');
+                answerSection.className = "space-y-4";
+
+                if (questionData.type === "multiple-choice") {
+                    questionData.options.forEach((option, index) => {
+                        const optionLabel = document.createElement('label');
+                        optionLabel.className = "flex items-center space-x-3 text-lg text-gray-300 p-3 rounded-lg hover:bg-blue-900/30 transition-colors cursor-pointer";
+                        const optionInput = document.createElement('input');
+                        optionInput.type = "radio";
+                        optionInput.name = `question-${currentQuestionIndex}`;
+                        optionInput.value = option;
+                        optionInput.className = "form-radio h-5 w-5 text-blue-500 focus:ring-blue-500";
+                        optionLabel.appendChild(optionInput);
+                        optionLabel.appendChild(document.createTextNode(option));
+                        answerSection.appendChild(optionLabel);
+                    });
+                } else if (questionData.type === "short-answer") {
+                    const shortAnswerInput = document.createElement('textarea');
+                    shortAnswerInput.rows = 3;
+                    shortAnswerInput.placeholder = "Enter your response here...";
+                    shortAnswerInput.className = "w-full p-4 border border-gray-700 bg-blue-900/30 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
+                    shortAnswerInput.id = "short-answer-input";
+                    answerSection.appendChild(shortAnswerInput);
+                }
+
+                questionContainer.appendChild(answerSection);
+
+                const navButtons = document.createElement('div');
+                navButtons.className = "mt-6 flex justify-between";
+                
+                if (currentQuestionIndex > 0) {
+                    const prevButton = document.createElement('button');
+                    prevButton.textContent = "Previous";
+                    prevButton.className = "btn-secondary";
+                    prevButton.onclick = previousQuestion;
+                    navButtons.appendChild(prevButton);
+                } else {
+                    // Add empty div for spacing
+                    navButtons.appendChild(document.createElement('div'));
+                }
+                
+                const nextButton = document.createElement('button');
+                nextButton.textContent = currentQuestionIndex === surveyData.questions.length - 1 ? "Complete Survey" : "Next";
+                nextButton.className = "btn-primary";
+                nextButton.onclick = nextQuestion;
+                navButtons.appendChild(nextButton);
+
+                questionContainer.appendChild(navButtons);
+            };
+
+            /**
+             * Moves to the next question
+             */
+            const nextQuestion = () => {
+                let userAnswer = null;
+                const questionData = surveyData.questions[currentQuestionIndex];
+
+                if (questionData.type === "multiple-choice") {
+                    const selectedOption = document.querySelector(`input[name="question-${currentQuestionIndex}"]:checked`);
+                    if (selectedOption) {
+                        userAnswer = selectedOption.value;
+                    } else {
+                        alert("Please select an answer before continuing");
+                        return;
+                    }
+                } else if (questionData.type === "short-answer") {
+                    const shortAnswerInput = document.getElementById('short-answer-input');
+                    userAnswer = shortAnswerInput.value.trim();
+                    if (!userAnswer) {
+                        alert("Please provide an answer before continuing");
+                        return;
+                    }
+                }
+
+                // Save the answer
+                surveyAnswers.push({
+                    question: questionData.question,
+                    userAnswer: userAnswer
+                });
+                
+                // Move to the next question or finish
+                currentQuestionIndex++;
+                renderQuestion();
+            };
+
+            /**
+             * Moves to the previous question
+             */
+            const previousQuestion = () => {
+                // Remove the last answer
+                if (surveyAnswers.length > 0) {
+                    surveyAnswers.pop();
+                }
+                
+                // Move to the previous question
+                currentQuestionIndex--;
+                renderQuestion();
+            };
+
+            /**
+             * Updates the timer display.
+             */
+            const updateTimer = () => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    completeSurvey();
+                } else {
+                    timeLeft--;
+                }
+            };
+
+            /**
+             * Completes the survey and shows the completion screen.
+             */
+            const completeSurvey = () => {
+                // Stop the timer
+                clearInterval(timerInterval);
+                
+                // Hide survey screen and show completion screen
+                surveyScreen.classList.add('hidden');
+                completionScreen.classList.remove('hidden');
+                
+                // In a real implementation, you would save the data here
+                console.log("Survey completed:", {
+                    studentInfo,
+                    answers: surveyAnswers
+                });
+            };
+
+            // --- Event Listeners for Survey Logic ---
+            startButton.addEventListener('click', () => {
+                // Validate student info
+                if (!validateStudentInfo()) {
+                    return;
+                }
+                
+                // Hide start screen and show survey screen
+                startScreen.classList.add('hidden');
+                surveyScreen.classList.remove('hidden');
+                
+                // Start the timer
+                updateTimer();
+                timerInterval = setInterval(updateTimer, 1000);
+
+                // Display the first question
+                renderQuestion();
+            });
+
+            restartButton.addEventListener('click', () => {
+                // Reset state
+                currentQuestionIndex = 0;
+                surveyAnswers = [];
+                timeLeft = 300;
+                
+                // Hide completion screen and show start screen
+                completionScreen.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+                
+                // Reset form
+                studentNameInput.value = "";
+                studentYearInput.value = "";
+                studentCourseInput.value = "";
+            });
+
+            // --- Anti-Cheating Event Listeners ---
+            
+            // Disable right-click
+            document.addEventListener('contextmenu', e => e.preventDefault());
+
+            // Block restricted keys
+            document.addEventListener('keydown', e => {
+                if (
+                    e.key === 'F5' ||
+                    (e.ctrlKey && e.key === 'r') ||
+                    e.key === 'F12' ||
+                    (e.ctrlKey && e.shiftKey && (e.key === 'i' || e.key === 'j')) ||
+                    (e.ctrlKey && e.key === 'u') ||
+                    (e.ctrlKey && e.key === 'c') ||
+                    (e.ctrlKey && e.key === 'v') ||
+                    (e.ctrlKey && e.key === 'x') ||
+                    (e.ctrlKey && e.key === 'a') ||
+                    (e.ctrlKey && e.key === 's')
+                ) {
+                    e.preventDefault();
+                    console.warn(`Blocked restricted key: ${e.key}`);
+                }
+            });
+
+            // Initialize Three.js scene
+            initThreeJS();
+
+        })();
+    </script>
 </body>
 </html>
