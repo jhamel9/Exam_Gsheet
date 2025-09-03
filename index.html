@@ -640,6 +640,7 @@
              */
             function submitSurvey(studentInfo, surveyAnswers) {
                 // You must replace this URL with your Google Apps Script Web App URL
+                // The URL below is a dummy placeholder. You need to follow the instructions to generate your own.
                 const scriptUrl = "https://script.google.com/macros/s/AKfycbzHGxWH9gUSCfzEtLRgbziyWYuTtSROlvQz075v5R_3kdrbcSrDY7EA1p7cWb9MIP-Sew/exec";
 
                 fetch(scriptUrl, {
@@ -654,6 +655,7 @@
                 })
                 .then(res => {
                     if (!res.ok) {
+                        // FIX: Corrected syntax to use backticks for the template literal string.
                         throw new Error(`HTTP error! status: ${res.status}`);
                     }
                     return res.text(); // Correctly get the response as text
