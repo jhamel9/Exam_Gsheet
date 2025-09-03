@@ -477,26 +477,23 @@
                 }
             };
             
-            /**
-             * Submits survey data to Firestore.
-             * @param {object} studentInfo Student information object.
-             * @param {Array} surveyAnswers Array of survey answer objects.
+           /**
+             * Saves the result to Google Sheets via the Apps Script Web App.
+             * @param {string} name The student's name.
+             * @param {number} score The final score.
              */
-            async function submitSurvey(studentInfo, surveyAnswers) {
-                try {
-                    const surveyRef = firebase.collection(db, `/artifacts/${appId}/users/${userId}/survey_responses`);
-                    await firebase.addDoc(surveyRef, {
-                        ...studentInfo,
-                        answers: surveyAnswers,
-                        submissionDate: new Date().toISOString()
-                    });
-                    console.log("Survey submitted successfully to Firestore.");
-                    showMessageBox("Survey submitted successfully!");
-                } catch (err) {
-                    console.error("Error saving survey to Firestore:", err);
-                    showMessageBox("Error saving survey. Please try again.");
-                }
-            }
+            const saveResult = (name, score) => {
+                // IMPORTANT: Replace this URL with your Google Apps Script Web App URL
+                const scriptURL = "https://script.google.com/macros/s/AKfycbxkSekCDy0hhFxamZ7-cMsBQjkeDBWYw-HSjMEs6EWXsTeYEN76Cnhq3SXnkVv_pHLq/exec"; 
+                
+                fetch(scriptURL, {
+                    method: "POST",
+                    body: JSON.stringify({ name, year })
+                })
+                .then(res => res.text())
+                .then(msg => console.log("Saved:", msg))
+                .catch(err => console.error("Error:", err));
+            };
 
             // --- Three.js Points Visualization ---
             function initThreeJS() {
