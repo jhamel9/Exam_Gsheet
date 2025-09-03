@@ -165,6 +165,12 @@
     <!-- 3D Campus Canvas -->
     <canvas id="campus-canvas"></canvas>
 
+    <!-- Message Box -->
+    <div id="message-box" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 p-6 rounded-lg shadow-xl text-center z-50 transition-all duration-300 transform scale-95 opacity-0 pointer-events-none" style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);">
+        <p id="message-text" class="text-white text-lg font-semibold"></p>
+        <button onclick="document.getElementById('message-box').classList.remove('scale-100', 'opacity-100', 'pointer-events-auto'); document.getElementById('message-box').classList.add('scale-95', 'opacity-0', 'pointer-events-none');" class="mt-4 px-4 py-2 rounded-full text-white bg-[#4169E1] hover:bg-[#2d46a6] transition-colors">OK</button>
+    </div>
+
     <!-- Start Screen -->
     <div id="start-screen" class="card p-8 rounded-2xl w-full max-w-2xl text-center floating">
         <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#4169E1] to-[#2d46a6] flex items-center justify-center shadow-lg">
@@ -392,6 +398,11 @@
             const studentNameInput = document.getElementById('student-name');
             const studentYearInput = document.getElementById('student-year');
             const studentCourseInput = document.getElementById('student-course');
+            
+            // Message box elements
+            const messageBox = document.getElementById('message-box');
+            const messageText = document.getElementById('message-text');
+
 
             // --- Three.js Points Visualization ---
             function initThreeJS() {
@@ -612,19 +623,60 @@
             // --- Survey Functions ---
 
             /**
+             * Shows a custom message box instead of using an alert.
+             * @param {string} message The message to display.
+             */
+            const showMessageBox = (message) => {
+                messageText.textContent = message;
+                messageBox.classList.remove('scale-95', 'opacity-0', 'pointer-events-none');
+                messageBox.classList.add('scale-100', 'opacity-100', 'pointer-events-auto');
+            };
+
+            /**
+             * Submits survey data to a Google Sheet via a Google Apps Script.
+             * You MUST replace "YOUR_SCRIPT_URL" with the URL of your deployed script.
+             * @param {object} studentInfo Student information object.
+             * @param {Array} surveyAnswers Array of survey answer objects.
+             */
+            function submitSurvey(studentInfo, surveyAnswers) {
+                // You must replace this URL with your Google Apps Script Web App URL
+                const scriptUrl = "YOUR_SCRIPT_URL";
+
+                fetch(scriptUrl, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        name: studentInfo.name,
+                        year: studentInfo.year,
+                        course: studentInfo.course,
+                        answers: surveyAnswers
+                    }),
+                    headers: { "Content-Type": "application/json" }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    showMessageBox("Survey submitted successfully!");
+                    console.log("Saved to Google Sheets:", data);
+                })
+                .catch(err => {
+                    showMessageBox("Error saving survey. Please try again.");
+                    console.error("Error saving survey:", err);
+                });
+            }
+
+            /**
              * Validates student information form
              */
             const validateStudentInfo = () => {
                 if (!studentNameInput.value.trim()) {
                     // Replaced alert with a simple console log for a better user experience
-                    console.log("Please enter your name");
+                    showMessageBox("Please enter your name");
                     studentNameInput.focus();
                     return false;
                 }
                 
                 if (!studentYearInput.value) {
                     // Replaced alert with a simple console log for a better user experience
-                    console.log("Please select your year level");
+                    showMessageBox("Please select your year level");
                     studentYearInput.focus();
                     return false;
                 }
@@ -724,7 +776,7 @@
                         userAnswer = selectedOption.value;
                     } else {
                         // Replaced alert with a simple console log for a better user experience
-                        console.log("Please select an answer before continuing");
+                        showMessageBox("Please select an answer before continuing");
                         return;
                     }
                 } else if (questionData.type === "short-answer") {
@@ -732,7 +784,7 @@
                     userAnswer = shortAnswerInput.value.trim();
                     if (!userAnswer) {
                         // Replaced alert with a simple console log for a better user experience
-                        console.log("Please provide an answer before continuing");
+                        showMessageBox("Please provide an answer before continuing");
                         return;
                     }
                 }
@@ -795,10 +847,7 @@
                 }
                 
                 // In a real implementation, you would save the data here
-                console.log("Survey completed:", {
-                    studentInfo,
-                    answers: surveyAnswers
-                });
+                submitSurvey(studentInfo, surveyAnswers);
             };
 
             // --- Event Listeners for Survey Logic ---
