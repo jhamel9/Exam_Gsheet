@@ -3,41 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Symbiote Exam Protocol</title>
+    <title>CEC Campus Navigation - User Survey</title>
     <!-- Use Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom styles for the exam interface and modals */
+        /* Custom styles for the survey interface */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0D0D0D;
-            background-image: radial-gradient(circle at center, rgba(169, 34, 34, 0.3) 0%, transparent 25%),
-                              radial-gradient(circle at center, rgba(169, 34, 34, 0.3) 0%, transparent 25%),
-                              radial-gradient(circle at center, rgba(169, 34, 34, 0.3) 0%, transparent 25%);
+            background-color: #0D2239; /* CEC blue */
+            background-image: radial-gradient(circle at center, rgba(13, 34, 57, 0.8) 0%, transparent 25%),
+                              radial-gradient(circle at center, rgba(13, 34, 57, 0.8) 0%, transparent 25%),
+                              radial-gradient(circle at center, rgba(13, 34, 57, 0.8) 0%, transparent 25%);
             background-repeat: no-repeat;
             background-size: 80px 80px;
             color: #E5E5E5;
             transition: all 0.3s ease-in-out;
         }
 
-        .venom-title {
+        .cec-title {
             font-family: 'Bebas Neue', sans-serif;
             letter-spacing: 2px;
+            color: #D4AF37; /* CEC gold */
         }
 
         .card {
-            background-color: #1A1A1A;
-            border: 2px solid #A92222;
+            background-color: #1A2E47;
+            border: 2px solid #D4AF37;
             transition: all 0.3s ease-in-out;
             animation: pulse-border 2s infinite ease-in-out;
         }
 
         .card:hover {
             transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 10px 30px rgba(169, 34, 34, 0.5);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
             animation-play-state: paused;
         }
 
@@ -46,8 +47,8 @@
         }
         .modal-content {
             animation: fadeIn 0.3s ease-out;
-            background-color: #1A1A1A;
-            border: 2px solid #A92222;
+            background-color: #1A2E47;
+            border: 2px solid #D4AF37;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.95); }
@@ -55,9 +56,9 @@
         }
 
         @keyframes pulse-border {
-            0% { border-color: #A92222; box-shadow: 0 0 5px rgba(169, 34, 34, 0.5); }
-            50% { border-color: #FF0000; box-shadow: 0 0 15px rgba(255, 0, 0, 0.7); }
-            100% { border-color: #A92222; box-shadow: 0 0 5px rgba(169, 34, 34, 0.5); }
+            0% { border-color: #D4AF37; box-shadow: 0 0 5px rgba(212, 175, 55, 0.3); }
+            50% { border-color: #FFD700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
+            100% { border-color: #D4AF37; box-shadow: 0 0 5px rgba(212, 175, 55, 0.3); }
         }
 
         /* Hide scrollbars for a cleaner look */
@@ -78,17 +79,17 @@
             width: 8px;
         }
         #question-container::-webkit-scrollbar-track {
-            background: #222;
+            background: #1A2E47;
         }
         #question-container::-webkit-scrollbar-thumb {
-            background-color: #A92222;
+            background-color: #D4AF37;
             border-radius: 4px;
         }
         
         /* Form styling */
         .form-input {
-            background-color: #111;
-            border: 1px solid #333;
+            background-color: #0D2239;
+            border: 1px solid #2C4369;
             color: white;
             padding: 0.75rem;
             border-radius: 0.5rem;
@@ -97,8 +98,8 @@
         }
         .form-input:focus {
             outline: none;
-            border-color: #A92222;
-            box-shadow: 0 0 0 2px rgba(169, 34, 34, 0.3);
+            border-color: #D4AF37;
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
         }
         .form-label {
             display: block;
@@ -111,7 +112,7 @@
         .spinner {
             border: 4px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border-top: 4px solid #A92222;
+            border-top: 4px solid #D4AF37;
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
@@ -121,24 +122,40 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* CEC logo styling */
+        .cec-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #0D2239 0%, #1A2E47 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #D4AF37;
+            margin: 0 auto 20px;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+        }
+        .cec-logo-inner {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            color: #D4AF37;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
     <!-- Start Screen -->
     <div id="start-screen" class="card p-8 rounded-xl shadow-2xl w-full max-w-2xl text-center transition-opacity duration-500">
-        <h1 class="text-6xl font-extrabold text-white mb-4 venom-title">Symbiote Exam Protocol</h1>
-        <p class="text-lg text-gray-400 mb-8">Initiate the bond. Your mental fortitude will be tested. Read the terms before proceeding.</p>
-        
-        <!-- Loading indicator (initially hidden) -->
-        <div id="loading-indicator" class="hidden">
-            <div class="spinner"></div>
-            <p class="text-gray-400 mt-2">Loading exam data...</p>
+        <div class="cec-logo">
+            <div class="cec-logo-inner">CEC</div>
         </div>
+        <h1 class="text-6xl font-extrabold text-white mb-4 cec-title">Campus Navigation System</h1>
+        <p class="text-lg text-gray-300 mb-8">Help us improve campus navigation by completing this survey</p>
         
         <!-- Student Information Form -->
-        <div id="student-info-form" class="text-left p-6 rounded-lg mb-6" style="background-color: #111;">
-            <h2 class="text-xl font-bold text-gray-200 mb-4">Host Identification:</h2>
+        <div id="student-info-form" class="text-left p-6 rounded-lg mb-6" style="background-color: #0D2239;">
+            <h2 class="text-xl font-bold text-gray-200 mb-4">Student Information:</h2>
             
             <div class="mb-4">
                 <label class="form-label" for="student-name">Full Name</label>
@@ -146,37 +163,46 @@
             </div>
             
             <div class="mb-4">
-                <label class="form-label" for="student-section">Section</label>
-                <input type="text" id="student-section" class="form-input" placeholder="Enter your section" required>
+                <label class="form-label" for="student-year">Year Level</label>
+                <select id="student-year" class="form-input" required>
+                    <option value="">Select your year level</option>
+                    <option value="Grade 7">Grade 7</option>
+                    <option value="Grade 8">Grade 8</option>
+                    <option value="Grade 9">Grade 9</option>
+                    <option value="Grade 10">Grade 10</option>
+                    <option value="Grade 11">Grade 11</option>
+                    <option value="Grade 12">Grade 12</option>
+                    <option value="College">College</option>
+                    <option value="Faculty">Faculty/Staff</option>
+                </select>
             </div>
             
             <div class="mb-4">
-                <label class="form-label" for="student-edp">EDP Code</label>
-                <input type="text" id="student-edp" class="form-input" placeholder="Enter EDP code" required>
+                <label class="form-label" for="student-course">Course/Program (if applicable)</label>
+                <input type="text" id="student-course" class="form-input" placeholder="e.g., BS Computer Science">
             </div>
         </div>
         
-        <div class="text-left p-6 rounded-lg mb-8" style="background-color: #111;">
-            <h2 class="text-xl font-bold text-gray-200 mb-2">Protocol Rules:</h2>
-            <ul class="list-disc list-inside text-gray-400 space-y-2">
-                <li>The test begins upon "Start".</li>
-                <li>Full screen mode is mandatory. Any attempt to exit or switch windows will be detected.</li>
-                <li>Restricted shortcuts (right-click, copy, paste, etc.) are disabled.</li>
-                <li>The symbiotic timer will not pause.</li>
-                <li>Answers are submitted and saved instantly.</li>
+        <div class="text-left p-6 rounded-lg mb-8" style="background-color: #0D2239;">
+            <h2 class="text-xl font-bold text-gray-200 mb-2">Survey Guidelines:</h2>
+            <ul class="list-disc list-inside text-gray-300 space-y-2">
+                <li>This survey will take approximately 5-7 minutes to complete.</li>
+                <li>Your responses will help improve campus navigation for everyone.</li>
+                <li>All responses are anonymous and will be used for academic purposes only.</li>
+                <li>Please answer all questions honestly and to the best of your ability.</li>
             </ul>
         </div>
-        <button id="start-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
-            Bond and Begin
+        <button id="start-button" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
+            Begin Survey
         </button>
     </div>
 
-    <!-- Exam Screen -->
-    <div id="exam-screen" class="hidden w-full h-full p-4 transition-opacity duration-500 flex flex-col items-center">
-        <!-- Header with Timer and Score -->
+    <!-- Survey Screen -->
+    <div id="survey-screen" class="hidden w-full h-full p-4 transition-opacity duration-500 flex flex-col items-center">
+        <!-- Header with Progress and Timer -->
         <div class="card w-full max-w-2xl rounded-xl shadow-lg p-6 mb-6 flex justify-between items-center">
-            <div class="text-xl font-semibold text-gray-200">Time Left: <span id="timer" class="text-red-500 font-bold"></span></div>
-            <div class="text-xl font-semibold text-gray-200">Score: <span id="score" class="text-green-600 font-bold">0</span></div>
+            <div class="text-xl font-semibold text-gray-200">Progress: <span id="progress" class="text-blue-400 font-bold">1/15</span></div>
+            <div class="text-xl font-semibold text-gray-200">Time: <span id="timer" class="text-green-400 font-bold">05:00</span></div>
         </div>
 
         <!-- Question Container -->
@@ -185,138 +211,139 @@
         </div>
     </div>
 
-    <!-- Violation Modal -->
-    <div id="violation-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center modal-overlay">
-        <div class="modal-content p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
-            <h2 class="text-3xl font-bold text-red-600 mb-4">Violation Detected!</h2>
-            <p class="text-gray-400 text-lg mb-6">You have breached the protocol. The symbiote is displeased.</p>
-            <p class="text-gray-500 text-sm mb-4">You have 8 seconds to return or face termination.</p>
-            <div class="flex flex-col space-y-4">
-                <button id="continue-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-md transition-all duration-300">
-                    Continue Protocol
-                </button>
-                <button id="exit-button" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-6 rounded-full shadow-md transition-all duration-300">
-                    Terminate Protocol
-                </button>
-            </div>
+    <!-- Completion Screen -->
+    <div id="completion-screen" class="hidden card p-8 rounded-xl shadow-2xl w-full max-w-2xl text-center transition-opacity duration-500">
+        <div class="cec-logo">
+            <div class="cec-logo-inner">CEC</div>
         </div>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <div id="confirmation-modal" class="fixed inset-0 z-40 hidden flex items-center justify-center modal-overlay">
-        <div class="modal-content p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
-            <h2 class="text-xl font-bold text-gray-200 mb-4">Confirm Submission</h2>
-            <p class="text-gray-400 mb-6">Are you certain you wish to submit this answer and proceed?</p>
-            <div class="flex justify-center space-x-4">
-                <button id="confirm-yes-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-6 rounded-full shadow-md transition-all duration-300">
-                    Yes
-                </button>
-                <button id="confirm-no-button" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-full shadow-md transition-all duration-300">
-                    No
-                </button>
-            </div>
+        <h2 class="text-4xl font-extrabold text-white mb-4 cec-title">Survey Complete!</h2>
+        <p class="text-lg text-gray-300 mb-6">Thank you for participating in our survey.</p>
+        <div class="mb-6 p-6 rounded-lg bg-blue-900/30">
+            <p class="text-gray-200 mb-4">Your feedback will help us create a better campus navigation system for Cebu Eastern College.</p>
+            <p class="text-gray-300 text-sm">The navigation system will include:</p>
+            <ul class="list-disc list-inside text-gray-300 text-sm mt-2 space-y-1">
+                <li>Faculty information directory</li>
+                <li>Interactive room navigation</li>
+                <li>Emergency exit guidance</li>
+                <li>Event creation and location setting</li>
+            </ul>
         </div>
+        <button id="restart-button" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
+            Return to Start
+        </button>
     </div>
 
     <!-- Script Block -->
     <script>
         // Use an IIFE (Immediately Invoked Function Expression) to avoid polluting the global scope
         (function() {
-            // --- Exam Data and State ---
-            let examData = {};
-            let examDataLoaded = false;
+            // --- Survey Data ---
+            const surveyData = {
+                questions: [
+                    {
+                        type: "multiple-choice",
+                        question: "How often do you have difficulty finding classrooms or offices on campus?",
+                        options: ["Very Often", "Often", "Sometimes", "Rarely", "Never"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Which feature would be most valuable in a campus navigation app?",
+                        options: ["Room Navigation", "Faculty Directory", "Emergency Exits", "Event Locations", "All of the above"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How do you currently find your way around campus?",
+                        options: ["Ask someone for directions", "Use printed maps", "Trial and error", "I already know my way", "Other"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Have you ever been late to class because you couldn't find the room?",
+                        options: ["Yes, frequently", "Yes, occasionally", "No, never"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How important is an emergency exit guide in a campus navigation system?",
+                        options: ["Extremely Important", "Very Important", "Somewhat Important", "Not Important"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Would you use a feature that shows real-time event locations on campus?",
+                        options: ["Definitely", "Probably", "Maybe", "Probably Not", "Definitely Not"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How often do you need to find a faculty member's office?",
+                        options: ["Daily", "Weekly", "Monthly", "Rarely", "Never"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Which device would you most likely use for campus navigation?",
+                        options: ["Smartphone", "Tablet", "Laptop", "Desktop Computer", "Information Kiosk"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How satisfied are you with the current signage and wayfinding on campus?",
+                        options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"],
+                    },
+                    {
+                        type: "short-answer",
+                        question: "What specific location on campus do you find most difficult to navigate?",
+                    },
+                    {
+                        type: "short-answer",
+                        question: "What additional features would you like to see in a campus navigation app?",
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How likely are you to use a campus navigation system if it were available?",
+                        options: ["Extremely Likely", "Very Likely", "Somewhat Likely", "Not Likely"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Which operating system do you primarily use on your mobile device?",
+                        options: ["Android", "iOS", "I don't use a mobile device", "Other"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How would you prefer to access the campus navigation system?",
+                        options: ["Mobile App", "Web Browser", "Both", "Information Kiosks"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Would you be interested in a feature that allows students to create study group meetings with specific locations?",
+                        options: ["Yes, definitely", "Maybe", "No, not interested"],
+                    }
+                ]
+            };
 
             // Global state variables
-            let shuffledQuestions = [];
             let currentQuestionIndex = 0;
-            let studentAnswers = [];
-            let score = 0;
+            let surveyAnswers = [];
             let timerInterval;
-            let timeLeft = 600; // 10 minutes in seconds
-            let violationTimer;
+            let timeLeft = 300; // 5 minutes in seconds
             let studentInfo = {
                 name: "",
-                section: "",
-                edp: ""
+                year: "",
+                course: ""
             };
 
             // --- DOM Elements ---
             const body = document.body;
             const startScreen = document.getElementById('start-screen');
-            const examScreen = document.getElementById('exam-screen');
+            const surveyScreen = document.getElementById('survey-screen');
+            const completionScreen = document.getElementById('completion-screen');
             const startButton = document.getElementById('start-button');
+            const restartButton = document.getElementById('restart-button');
             const timerDisplay = document.getElementById('timer');
-            const scoreDisplay = document.getElementById('score');
+            const progressDisplay = document.getElementById('progress');
             const questionContainer = document.getElementById('question-container');
-            const violationModal = document.getElementById('violation-modal');
-            const continueButton = document.getElementById('continue-button');
-            const exitButton = document.getElementById('exit-button');
-            const confirmationModal = document.getElementById('confirmation-modal');
-            const confirmYesButton = document.getElementById('confirm-yes-button');
-            const confirmNoButton = document.getElementById('confirm-no-button');
-            const loadingIndicator = document.getElementById('loading-indicator');
-            const studentInfoForm = document.getElementById('student-info-form');
-            const rulesSection = document.querySelector('.text-left.p-6.rounded-lg.mb-8');
             
             // Student info form elements
             const studentNameInput = document.getElementById('student-name');
-            const studentSectionInput = document.getElementById('student-section');
-            const studentEdpInput = document.getElementById('student-edp');
+            const studentYearInput = document.getElementById('student-year');
+            const studentCourseInput = document.getElementById('student-course');
 
             // --- Functions ---
-
-            /**
-             * Load exam data from external JSON file
-             */
-            const loadExamData = () => {
-                // Show loading indicator
-                loadingIndicator.classList.remove('hidden');
-                studentInfoForm.classList.add('hidden');
-                rulesSection.classList.add('hidden');
-                startButton.disabled = true;
-                
-                fetch('survey_data.json')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        examData = data;
-                        examDataLoaded = true;
-                        
-                        // Hide loading indicator and show form
-                        loadingIndicator.classList.add('hidden');
-                        studentInfoForm.classList.remove('hidden');
-                        rulesSection.classList.remove('hidden');
-                        startButton.disabled = false;
-                    })
-                    .catch(error => {
-                        console.error('Error loading exam data:', error);
-                        loadingIndicator.innerHTML = `
-                            <div class="text-red-500 mb-4">
-                                <p class="font-bold">Error loading exam data:</p>
-                                <p>${error.message}</p>
-                            </div>
-                            <button id="retry-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded">
-                                Retry
-                            </button>
-                        `;
-                        
-                        document.getElementById('retry-button').addEventListener('click', loadExamData);
-                    });
-            };
-
-            /**
-             * Handles the cursor-following background effect.
-             * @param {MouseEvent} e The mouse event object.
-             */
-            const handleMouseMove = (e) => {
-                const x = (e.clientX / window.innerWidth) * 100;
-                const y = (e.clientY / window.innerHeight) * 100;
-                body.style.backgroundPosition = `${x}% ${y}%`;
-            };
 
             /**
              * Validates student information form
@@ -328,52 +355,36 @@
                     return false;
                 }
                 
-                if (!studentSectionInput.value.trim()) {
-                    alert("Please enter your section");
-                    studentSectionInput.focus();
-                    return false;
-                }
-                
-                if (!studentEdpInput.value.trim()) {
-                    alert("Please enter your EDP code");
-                    studentEdpInput.focus();
+                if (!studentYearInput.value) {
+                    alert("Please select your year level");
+                    studentYearInput.focus();
                     return false;
                 }
                 
                 // Save student info
                 studentInfo = {
                     name: studentNameInput.value.trim(),
-                    section: studentSectionInput.value.trim(),
-                    edp: studentEdpInput.value.trim()
+                    year: studentYearInput.value,
+                    course: studentCourseInput.value.trim()
                 };
                 
                 return true;
             };
 
             /**
-             * Shuffles an array using the Fisher-Yates algorithm.
-             * @param {Array} array The array to shuffle.
-             * @returns {Array} The shuffled array.
-             */
-            const shuffleArray = (array) => {
-                for (let i = array.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [array[i], array[j]] = [array[j], array[i]];
-                }
-                return array;
-            };
-
-            /**
              * Renders the current question based on its type.
              */
             const renderQuestion = () => {
-                if (currentQuestionIndex >= shuffledQuestions.length) {
-                    finishExam();
+                if (currentQuestionIndex >= surveyData.questions.length) {
+                    completeSurvey();
                     return;
                 }
 
-                const questionData = shuffledQuestions[currentQuestionIndex];
+                const questionData = surveyData.questions[currentQuestionIndex];
                 questionContainer.innerHTML = ''; // Clear previous content
+
+                // Update progress display
+                progressDisplay.textContent = `${currentQuestionIndex + 1}/${surveyData.questions.length}`;
 
                 const questionElement = document.createElement('h2');
                 questionElement.className = "text-2xl font-bold text-gray-200 mb-6";
@@ -386,85 +397,97 @@
                 if (questionData.type === "multiple-choice") {
                     questionData.options.forEach((option, index) => {
                         const optionLabel = document.createElement('label');
-                        optionLabel.className = "flex items-center space-x-3 text-lg text-gray-400 p-3 rounded-lg hover:bg-red-900/30 transition-colors cursor-pointer";
+                        optionLabel.className = "flex items-center space-x-3 text-lg text-gray-300 p-3 rounded-lg hover:bg-blue-900/30 transition-colors cursor-pointer";
                         const optionInput = document.createElement('input');
                         optionInput.type = "radio";
                         optionInput.name = `question-${currentQuestionIndex}`;
                         optionInput.value = option;
-                        optionInput.className = "form-radio h-5 w-5 text-red-600 focus:ring-red-500";
+                        optionInput.className = "form-radio h-5 w-5 text-blue-500 focus:ring-blue-500";
                         optionLabel.appendChild(optionInput);
                         optionLabel.appendChild(document.createTextNode(option));
                         answerSection.appendChild(optionLabel);
                     });
                 } else if (questionData.type === "short-answer") {
-                    const shortAnswerInput = document.createElement('input');
-                    shortAnswerInput.type = "text";
-                    shortAnswerInput.placeholder = "Answer...";
-                    shortAnswerInput.className = "w-full p-4 border border-gray-700 bg-gray-900 text-white rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all";
+                    const shortAnswerInput = document.createElement('textarea');
+                    shortAnswerInput.rows = 3;
+                    shortAnswerInput.placeholder = "Enter your response here...";
+                    shortAnswerInput.className = "w-full p-4 border border-gray-700 bg-blue-900/30 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
                     shortAnswerInput.id = "short-answer-input";
                     answerSection.appendChild(shortAnswerInput);
-                    // Add a keydown listener for "Enter" key
-                    shortAnswerInput.addEventListener('keydown', (event) => {
-                        if (event.key === 'Enter') {
-                            event.preventDefault();
-                            showConfirmationModal();
-                        }
-                    });
                 }
 
                 questionContainer.appendChild(answerSection);
 
-                const submitButton = document.createElement('button');
-                submitButton.textContent = "Submit Answer";
-                submitButton.className = "mt-6 bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105";
-                submitButton.onclick = showConfirmationModal;
-                questionContainer.appendChild(submitButton);
+                const navButtons = document.createElement('div');
+                navButtons.className = "mt-6 flex justify-between";
+                
+                if (currentQuestionIndex > 0) {
+                    const prevButton = document.createElement('button');
+                    prevButton.textContent = "Previous";
+                    prevButton.className = "bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300";
+                    prevButton.onclick = previousQuestion;
+                    navButtons.appendChild(prevButton);
+                } else {
+                    // Add empty div for spacing
+                    navButtons.appendChild(document.createElement('div'));
+                }
+                
+                const nextButton = document.createElement('button');
+                nextButton.textContent = currentQuestionIndex === surveyData.questions.length - 1 ? "Complete Survey" : "Next";
+                nextButton.className = "bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105";
+                nextButton.onclick = nextQuestion;
+                navButtons.appendChild(nextButton);
+
+                questionContainer.appendChild(navButtons);
             };
 
             /**
-             * Shows the confirmation modal.
+             * Moves to the next question
              */
-            const showConfirmationModal = () => {
-                confirmationModal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden'; // Disable background scrolling
-            };
-
-            /**
-             * Hides the confirmation modal.
-             */
-            const hideConfirmationModal = () => {
-                confirmationModal.classList.add('hidden');
-                document.body.style.overflow = ''; // Enable background scrolling
-            };
-
-            /**
-             * Submits the current question's answer and moves to the next.
-             */
-            const submitAnswer = () => {
+            const nextQuestion = () => {
                 let userAnswer = null;
-                const questionData = shuffledQuestions[currentQuestionIndex];
+                const questionData = surveyData.questions[currentQuestionIndex];
 
                 if (questionData.type === "multiple-choice") {
                     const selectedOption = document.querySelector(`input[name="question-${currentQuestionIndex}"]:checked`);
                     if (selectedOption) {
                         userAnswer = selectedOption.value;
+                    } else {
+                        alert("Please select an answer before continuing");
+                        return;
                     }
                 } else if (questionData.type === "short-answer") {
                     const shortAnswerInput = document.getElementById('short-answer-input');
-                    userAnswer = shortAnswerInput.value.trim().toLowerCase();
+                    userAnswer = shortAnswerInput.value.trim();
+                    if (!userAnswer) {
+                        alert("Please provide an answer before continuing");
+                        return;
+                    }
                 }
 
                 // Save the answer
-                studentAnswers.push({
+                surveyAnswers.push({
                     question: questionData.question,
-                    userAnswer: userAnswer,
-                    correctAnswer: questionData.correctAnswer
+                    userAnswer: userAnswer
                 });
                 
                 // Move to the next question or finish
                 currentQuestionIndex++;
                 renderQuestion();
-                hideConfirmationModal();
+            };
+
+            /**
+             * Moves to the previous question
+             */
+            const previousQuestion = () => {
+                // Remove the last answer
+                if (surveyAnswers.length > 0) {
+                    surveyAnswers.pop();
+                }
+                
+                // Move to the previous question
+                currentQuestionIndex--;
+                renderQuestion();
             };
 
             /**
@@ -477,151 +500,43 @@
                 
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
-                    finishExam();
+                    completeSurvey();
                 } else {
                     timeLeft--;
                 }
             };
 
             /**
-             * Handles fullscreen exit and tab switching violations.
+             * Completes the survey and shows the completion screen.
              */
-            const handleViolation = () => {
-                if (violationModal.classList.contains('hidden')) {
-                    violationModal.classList.remove('hidden');
-                    // Automatically continue after 8 seconds
-                    violationTimer = setTimeout(() => {
-                        violationModal.classList.add('hidden');
-                        document.documentElement.requestFullscreen();
-                    }, 8000);
-                }
-            };
-
-            /**
-             * Ends the exam, calculates the score, and shows results.
-             */
-            const finishExam = () => {
+            const completeSurvey = () => {
                 // Stop the timer
                 clearInterval(timerInterval);
                 
-                // Calculate score
-                score = 0;
-                const results = studentAnswers.map(answer => {
-                    const isCorrect = (answer.userAnswer !== null && answer.userAnswer.toLowerCase() === answer.correctAnswer.toLowerCase());
-                    if (isCorrect) {
-                        score++;
-                    }
-                    return {
-                        question: answer.question,
-                        userAnswer: answer.userAnswer,
-                        correctAnswer: answer.correctAnswer,
-                        isCorrect: isCorrect
-                    };
-                });
-
-                // Display results
-                renderResults(results);
-            };
-            
-            /**
-             * Renders the final results screen.
-             * @param {Array} results The array of result objects.
-             */
-            const renderResults = (results) => {
-                examScreen.classList.remove('flex');
-                examScreen.classList.add('hidden');
+                // Hide survey screen and show completion screen
+                surveyScreen.classList.remove('flex');
+                surveyScreen.classList.add('hidden');
+                completionScreen.classList.remove('hidden');
                 
-                const resultsScreen = document.createElement('div');
-                resultsScreen.className = "card p-8 rounded-xl shadow-2xl w-full max-w-2xl text-center transition-opacity duration-500";
-                resultsScreen.innerHTML = `
-                    <h2 class="text-4xl font-extrabold text-green-500 mb-4 venom-title">Protocol Concluded!</h2>
-                    <div class="mb-6 p-4 rounded-lg bg-gray-900">
-                        <p class="text-lg text-gray-200"><span class="font-bold">Host:</span> ${studentInfo.name}</p>
-                        <p class="text-lg text-gray-200"><span class="font-bold">Section:</span> ${studentInfo.section}</p>
-                        <p class="text-lg text-gray-200"><span class="font-bold">EDP Code:</span> ${studentInfo.edp}</p>
-                    </div>
-                    <p class="text-2xl text-gray-200 mb-2">Your Score: <span class="font-bold">${score} / ${shuffledQuestions.length}</span></p>
-                    <p class="text-lg text-gray-400 mb-8">Review your answers below. The symbiote has taken note of your performance.</p>
-                `;
-                
-                const resultsList = document.createElement('div');
-                resultsList.className = "text-left space-y-6 mb-8";
-                results.forEach((result, index) => {
-                    resultsList.innerHTML += `
-                        <div class="p-4 rounded-lg shadow-inner ${result.isCorrect ? 'bg-green-900/30' : 'bg-red-900/30'}">
-                            <p class="font-bold text-gray-200 mb-2">Q${index + 1}. ${result.question}</p>
-                            <p class="text-sm">Your Answer: <span class="font-semibold ${result.isCorrect ? 'text-green-500' : 'text-red-500'}">${result.userAnswer || 'No Answer'}</span></p>
-                            <p class="text-sm">Correct Answer: <span class="font-semibold text-gray-400">${result.correctAnswer}</span></p>
-                        </div>
-                    `;
-                });
-                
-                const saveForm = document.createElement('div');
-                saveForm.className = "mt-6 flex flex-col space-y-4 items-center";
-                saveForm.innerHTML = `
-                    <button id="save-score-button" class="w-full bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
-                        Bond and Save Score
-                    </button>
-                `;
-
-                resultsScreen.appendChild(resultsList);
-                resultsScreen.appendChild(saveForm);
-                document.body.appendChild(resultsScreen);
-
-                document.getElementById('save-score-button').addEventListener('click', () => {
-                    saveResult(studentInfo, score);
-                    document.getElementById('save-score-button').textContent = "Score Saved!";
-                    document.getElementById('save-score-button').disabled = true;
+                // In a real implementation, you would save the data here
+                console.log("Survey completed:", {
+                    studentInfo,
+                    answers: surveyAnswers
                 });
             };
-            
-            /**
-             * Saves the result to Google Sheets via the Apps Script Web App.
-             * @param {Object} studentInfo The student information object.
-             * @param {number} score The final score.
-             */
-            const saveResult = (studentInfo, score) => {
-                // IMPORTANT: Replace this URL with your Google Apps Script Web App URL
-                const scriptURL = "https://script.google.com/macros/s/AKfycbwb8w9_iy8q97qzfmX4VOsH-YZt6872YRcfZVCAip6HQQlmqJ5FtVncQy7XeCkJMKHb/exec"; 
-                
-                fetch(scriptURL, {
-                    method: "POST",
-                    body: JSON.stringify({ 
-                        name: studentInfo.name,
-                        section: studentInfo.section,
-                        edp: studentInfo.edp,
-                        score: score 
-                    })
-                })
-                .then(res => res.text())
-                .then(msg => console.log("Saved:", msg))
-                .catch(err => console.error("Error:", err));
-            };
 
-            // --- Event Listeners for Exam Logic ---
+            // --- Event Listeners for Survey Logic ---
             startButton.addEventListener('click', () => {
-                // Check if exam data is loaded
-                if (!examDataLoaded) {
-                    alert("Exam data is still loading. Please wait.");
-                    return;
-                }
-                
                 // Validate student info
                 if (!validateStudentInfo()) {
                     return;
                 }
                 
-                // Request fullscreen
-                document.documentElement.requestFullscreen();
-
-                // Hide start screen and show exam screen
+                // Hide start screen and show survey screen
                 startScreen.classList.add('hidden');
-                examScreen.classList.remove('hidden');
-                examScreen.classList.add('flex');
+                surveyScreen.classList.remove('hidden');
+                surveyScreen.classList.add('flex');
                 
-                // Load and shuffle questions
-                shuffledQuestions = shuffleArray([...examData.questions]);
-
                 // Start the timer
                 updateTimer();
                 timerInterval = setInterval(updateTimer, 1000);
@@ -630,33 +545,20 @@
                 renderQuestion();
             });
 
-            // Confirmation modal buttons
-            confirmYesButton.addEventListener('click', submitAnswer);
-            confirmNoButton.addEventListener('click', hideConfirmationModal);
-            
-            // Confirmation modal keyboard support
-            document.addEventListener('keydown', (event) => {
-                if (confirmationModal.classList.contains('hidden')) return;
+            restartButton.addEventListener('click', () => {
+                // Reset state
+                currentQuestionIndex = 0;
+                surveyAnswers = [];
+                timeLeft = 300;
                 
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    submitAnswer();
-                } else if (event.key === 'Escape') {
-                    event.preventDefault();
-                    hideConfirmationModal();
-                }
-            });
-
-            // Violation modal buttons
-            continueButton.addEventListener('click', () => {
-                clearTimeout(violationTimer);
-                violationModal.classList.add('hidden');
-                document.documentElement.requestFullscreen();
-            });
-            exitButton.addEventListener('click', () => {
-                clearTimeout(violationTimer);
-                violationModal.classList.add('hidden');
-                finishExam();
+                // Hide completion screen and show start screen
+                completionScreen.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+                
+                // Reset form
+                studentNameInput.value = "";
+                studentYearInput.value = "";
+                studentCourseInput.value = "";
             });
 
             // --- Anti-Cheating Event Listeners ---
@@ -683,32 +585,6 @@
                 }
             });
 
-            // Detect tab switching
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'hidden' && !violationModal.classList.contains('hidden')) {
-                    handleViolation();
-                }
-            });
-
-            // Detect fullscreen exit
-            document.addEventListener('fullscreenchange', () => {
-                if (document.fullscreenElement === null && !violationModal.classList.contains('hidden')) {
-                    handleViolation();
-                }
-            });
-            // Also listen for Webkit prefixes for wider compatibility
-            document.addEventListener('webkitfullscreenchange', () => {
-                if (document.webkitFullscreenElement === null && !violationModal.classList.contains('hidden')) {
-                    handleViolation();
-                }
-            });
-
-            // Start cursor-following background effect on load
-            window.addEventListener('mousemove', handleMouseMove);
-            
-            // Load exam data when page loads
-            loadExamData();
-            
         })();
     </script>
 </body>
