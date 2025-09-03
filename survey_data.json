@@ -1,32 +1,77 @@
 {
-  "questions": [
-    {
-      "type": "multiple-choice",
-      "question": "What is the capital of France?",
-      "options": ["London", "Berlin", "Paris", "Rome"],
-      "correctAnswer": "Paris"
-    },
-    {
-      "type": "short-answer",
-      "question": "What is the main ingredient of guacamole?",
-      "correctAnswer": "avocado"
-    },
-    {
-      "type": "multiple-choice",
-      "question": "Which planet is known as the 'Red Planet'?",
-      "options": ["Jupiter", "Mars", "Venus", "Saturn"],
-      "correctAnswer": "Mars"
-    },
-    {
-      "type": "short-answer",
-      "question": "What is the largest ocean on Earth?",
-      "correctAnswer": "Pacific Ocean"
-    },
-    {
-      "type": "multiple-choice",
-      "question": "Which of the following is not a primary color?",
-      "options": ["Red", "Green", "Blue", "Yellow"],
-      "correctAnswer": "Green"
-    }
+               questions: [
+                    {
+                        type: "multiple-choice",
+                        question: "How often do you have difficulty finding classrooms or offices on campus?",
+                        options: ["Very Often", "Often", "Sometimes", "Rarely", "Never"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Which feature would be most valuable in a campus navigation app?",
+                        options: ["Room Navigation", "Faculty Directory", "Emergency Exits", "Event Locations", "All of the above"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How do you currently find your way around campus?",
+                        options: ["Ask someone for directions", "Use printed maps", "Trial and error", "I already know my way", "Other"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Have you ever been late to class because you couldn't find the room?",
+                        options: ["Yes, frequently", "Yes, occasionally", "No, never"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How important is an emergency exit guide in a campus navigation system?",
+                        options: ["Extremely Important", "Very Important", "Somewhat Important", "Not Important"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Would you use a feature that shows real-time event locations on campus?",
+                        options: ["Definitely", "Probably", "Maybe", "Probably Not", "Definitely Not"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How often do you need to find a faculty member's office?",
+                        options: ["Daily", "Weekly", "Monthly", "Rarely", "Never"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Which device would you most likely use for campus navigation?",
+                        options: ["Smartphone", "Tablet", "Laptop", "Desktop Computer", "Information Kiosk"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How satisfied are you with the current signage and wayfinding on campus?",
+                        options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"],
+                    },
+                    {
+                        type: "short-answer",
+                        question: "What specific location on campus do you find most difficult to navigate?",
+                    },
+                    {
+                        type: "short-answer",
+                        question: "What additional features would you like to see in a campus navigation app?",
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How likely are you to use a campus navigation system if it were available?",
+                        options: ["Extremely Likely", "Very Likely", "Somewhat Likely", "Not Likely"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Which operating system do you primarily use on your mobile device?",
+                        options: ["Android", "iOS", "I don't use a mobile device", "Other"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "How would you prefer to access the campus navigation system?",
+                        options: ["Mobile App", "Web Browser", "Both", "Information Kiosks"],
+                    },
+                    {
+                        type: "multiple-choice",
+                        question: "Would you be interested in a feature that allows students to create study group meetings with specific locations?",
+                        options: ["Yes, definitely", "Maybe", "No, not interested"],
+                    }
   ]
 }
