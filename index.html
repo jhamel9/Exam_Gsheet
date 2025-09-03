@@ -84,6 +84,28 @@
             background-color: #A92222;
             border-radius: 4px;
         }
+        
+        /* Form styling */
+        .form-input {
+            background-color: #111;
+            border: 1px solid #333;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #A92222;
+            box-shadow: 0 0 0 2px rgba(169, 34, 34, 0.3);
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #E5E5E5;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -92,6 +114,27 @@
     <div id="start-screen" class="card p-8 rounded-xl shadow-2xl w-full max-w-2xl text-center transition-opacity duration-500">
         <h1 class="text-6xl font-extrabold text-white mb-4 venom-title">Symbiote Exam Protocol</h1>
         <p class="text-lg text-gray-400 mb-8">Initiate the bond. Your mental fortitude will be tested. Read the terms before proceeding.</p>
+        
+        <!-- Student Information Form -->
+        <div id="student-info-form" class="text-left p-6 rounded-lg mb-6" style="background-color: #111;">
+            <h2 class="text-xl font-bold text-gray-200 mb-4">Host Identification:</h2>
+            
+            <div class="mb-4">
+                <label class="form-label" for="student-name">Full Name</label>
+                <input type="text" id="student-name" class="form-input" placeholder="Enter your name" required>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label" for="student-section">Section</label>
+                <input type="text" id="student-section" class="form-input" placeholder="Enter your section" required>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label" for="student-edp">EDP Code</label>
+                <input type="text" id="student-edp" class="form-input" placeholder="Enter EDP code" required>
+            </div>
+        </div>
+        
         <div class="text-left p-6 rounded-lg mb-8" style="background-color: #111;">
             <h2 class="text-xl font-bold text-gray-200 mb-2">Protocol Rules:</h2>
             <ul class="list-disc list-inside text-gray-400 space-y-2">
@@ -156,42 +199,19 @@
 
     <!-- Script Block -->
     <script>
-        // Use an IIFE (Immediately Invoked Function Expression) to avoid polluting the global scope
-        (function() {
-            // --- Exam Data and State ---
-            // Simulating exam-data.json
-            const examData = {
-                questions: [
-                    {
-                        type: "multiple-choice",
-                        question: "What is the capital of France?",
-                        options: ["London", "Berlin", "Paris", "Rome"],
-                        correctAnswer: "Paris"
-                    },
-                    {
-                        type: "short-answer",
-                        question: "What is the main ingredient of guacamole?",
-                        correctAnswer: "avocado"
-                    },
-                    {
-                        type: "multiple-choice",
-                        question: "Which planet is known as the 'Red Planet'?",
-                        options: ["Jupiter", "Mars", "Venus", "Saturn"],
-                        correctAnswer: "Mars"
-                    },
-                    {
-                        type: "short-answer",
-                        question: "What is the largest ocean on Earth?",
-                        correctAnswer: "Pacific Ocean"
-                    },
-                    {
-                        type: "multiple-choice",
-                        question: "Which of the following is not a primary color?",
-                        options: ["Red", "Green", "Blue", "Yellow"],
-                        correctAnswer: "Green"
-                    }
-                ]
-            };
+        // Replace the examData variable with this:
+let examData = {};
+
+// Load exam data from external JSON file
+fetch('survey_data.json')
+  .then(response => response.json())
+  .then(data => {
+      examData = data;
+  })
+  .catch(error => {
+      console.error('Error loading exam data:', error);
+      alert('Failed to load exam data. Please try again later.');
+  });
 
             // Global state variables
             let shuffledQuestions = [];
@@ -201,8 +221,11 @@
             let timerInterval;
             let timeLeft = 600; // 10 minutes in seconds
             let violationTimer;
-            let backgroundPositionX = 0;
-            let backgroundPositionY = 0;
+            let studentInfo = {
+                name: "",
+                section: "",
+                edp: ""
+            };
 
             // --- DOM Elements ---
             const body = document.body;
@@ -218,6 +241,11 @@
             const confirmationModal = document.getElementById('confirmation-modal');
             const confirmYesButton = document.getElementById('confirm-yes-button');
             const confirmNoButton = document.getElementById('confirm-no-button');
+            
+            // Student info form elements
+            const studentNameInput = document.getElementById('student-name');
+            const studentSectionInput = document.getElementById('student-section');
+            const studentEdpInput = document.getElementById('student-edp');
 
             // --- Functions ---
 
@@ -229,6 +257,38 @@
                 const x = (e.clientX / window.innerWidth) * 100;
                 const y = (e.clientY / window.innerHeight) * 100;
                 body.style.backgroundPosition = `${x}% ${y}%`;
+            };
+
+            /**
+             * Validates student information form
+             */
+            const validateStudentInfo = () => {
+                if (!studentNameInput.value.trim()) {
+                    alert("Please enter your name");
+                    studentNameInput.focus();
+                    return false;
+                }
+                
+                if (!studentSectionInput.value.trim()) {
+                    alert("Please enter your section");
+                    studentSectionInput.focus();
+                    return false;
+                }
+                
+                if (!studentEdpInput.value.trim()) {
+                    alert("Please enter your EDP code");
+                    studentEdpInput.focus();
+                    return false;
+                }
+                
+                // Save student info
+                studentInfo = {
+                    name: studentNameInput.value.trim(),
+                    section: studentSectionInput.value.trim(),
+                    edp: studentEdpInput.value.trim()
+                };
+                
+                return true;
             };
 
             /**
@@ -416,6 +476,11 @@
                 resultsScreen.className = "card p-8 rounded-xl shadow-2xl w-full max-w-2xl text-center transition-opacity duration-500";
                 resultsScreen.innerHTML = `
                     <h2 class="text-4xl font-extrabold text-green-500 mb-4 venom-title">Protocol Concluded!</h2>
+                    <div class="mb-6 p-4 rounded-lg bg-gray-900">
+                        <p class="text-lg text-gray-200"><span class="font-bold">Host:</span> ${studentInfo.name}</p>
+                        <p class="text-lg text-gray-200"><span class="font-bold">Section:</span> ${studentInfo.section}</p>
+                        <p class="text-lg text-gray-200"><span class="font-bold">EDP Code:</span> ${studentInfo.edp}</p>
+                    </div>
                     <p class="text-2xl text-gray-200 mb-2">Your Score: <span class="font-bold">${score} / ${shuffledQuestions.length}</span></p>
                     <p class="text-lg text-gray-400 mb-8">Review your answers below. The symbiote has taken note of your performance.</p>
                 `;
@@ -435,7 +500,6 @@
                 const saveForm = document.createElement('div');
                 saveForm.className = "mt-6 flex flex-col space-y-4 items-center";
                 saveForm.innerHTML = `
-                    <input type="text" id="student-name-input" placeholder="Enter your host name..." class="w-full p-3 border border-gray-700 bg-gray-900 text-white rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all">
                     <button id="save-score-button" class="w-full bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
                         Bond and Save Score
                     </button>
@@ -446,27 +510,29 @@
                 document.body.appendChild(resultsScreen);
 
                 document.getElementById('save-score-button').addEventListener('click', () => {
-                    const name = document.getElementById('student-name-input').value;
-                    if (name) {
-                        saveResult(name, score);
-                        document.getElementById('save-score-button').textContent = "Score Saved!";
-                        document.getElementById('save-score-button').disabled = true;
-                    }
+                    saveResult(studentInfo, score);
+                    document.getElementById('save-score-button').textContent = "Score Saved!";
+                    document.getElementById('save-score-button').disabled = true;
                 });
             };
             
             /**
              * Saves the result to Google Sheets via the Apps Script Web App.
-             * @param {string} name The student's name.
+             * @param {Object} studentInfo The student information object.
              * @param {number} score The final score.
              */
-            const saveResult = (name, score) => {
+            const saveResult = (studentInfo, score) => {
                 // IMPORTANT: Replace this URL with your Google Apps Script Web App URL
                 const scriptURL = "https://script.google.com/macros/s/AKfycbwb8w9_iy8q97qzfmX4VOsH-YZt6872YRcfZVCAip6HQQlmqJ5FtVncQy7XeCkJMKHb/exec"; 
                 
                 fetch(scriptURL, {
                     method: "POST",
-                    body: JSON.stringify({ name, score })
+                    body: JSON.stringify({ 
+                        name: studentInfo.name,
+                        section: studentInfo.section,
+                        edp: studentInfo.edp,
+                        score: score 
+                    })
                 })
                 .then(res => res.text())
                 .then(msg => console.log("Saved:", msg))
@@ -475,6 +541,11 @@
 
             // --- Event Listeners for Exam Logic ---
             startButton.addEventListener('click', () => {
+                // Validate student info
+                if (!validateStudentInfo()) {
+                    return;
+                }
+                
                 // Request fullscreen
                 document.documentElement.requestFullscreen();
 
